@@ -33,7 +33,7 @@ session_info()
 
 # Import data
 
-Data were imported from the field book evaluated during the 2017-2019 growing seasons. The evaluations focused on the agronomic traits and fruit biometrics of the mango crop.
+The data were imported from the field book of the biological, dasometric, and phytosanitary evaluation of mesquite trees to identify the main pests and diseases associated with the genus *Neltuma*.
 
 ```{r}
 url <- "https://docs.google.com/spreadsheets/d/19zJF9ti9AQhOCTenP6UqL0jA8Anl1s0r0ld-xzrR-PY/edit?gid=1347114226#gid=1347114226"
@@ -41,9 +41,72 @@ url <- "https://docs.google.com/spreadsheets/d/19zJF9ti9AQhOCTenP6UqL0jA8Anl1s0r
 gs <- url %>% 
   as_sheets_id()
 
-datos <- gs %>% 
-  range_read("total") %>% 
- 
+library(dplyr)
+library(googlesheets4)
+
+datos <- gs %>%
+  range_read("total") %>%
+  mutate(
+    Forma_leg = case_when(
+      Forma_arbol == 3 ~ "un solo tallo",
+      Forma_arbol == 2 ~ "intermedios",
+      Forma_arbol == 1 ~ "múltiples tallos",
+      TRUE ~ NA_character_
+    ),
+    Cal_tronq_leg = case_when(
+      Calidad_tronco == 3 ~ "sin defectos",
+      Calidad_tronco == 2 ~ "regular defectos",
+      Calidad_tronco == 1 ~ "defectuoso",
+      TRUE ~ NA_character_
+    ),
+    Prod_fru_leg = case_when(
+      Produccion_frutos == 4 ~ "100% de las ramas",
+      Produccion_frutos == 3 ~ "75% de las ramas",
+      Produccion_frutos == 2 ~ "50% de las ramas",
+      Produccion_frutos == 1 ~ "25% de las ramas",
+      Produccion_frutos == 0 ~ "Sin frutos",
+      TRUE ~ NA_character_
+    ),
+    Cal_fru_leg = case_when(
+      Calidad_frutos == 3 ~ "muy dulce",
+      Calidad_frutos == 2 ~ "dulce",
+      Calidad_frutos == 1 ~ "muy amargo",
+      Calidad_frutos == 0 ~ "amargo",
+      TRUE ~ NA_character_
+    ),
+    Cal_foll_leg = case_when(
+      Calidad_follaje == 3 ~ "total de las ramas",
+      Calidad_follaje == 2 ~ "2/3 de las ramas",
+      Calidad_follaje == 1 ~ "1/3 de las ramas",
+      TRUE ~ NA_character_
+    ),
+    Bif_leg = case_when(
+      Bifurcacion == 3 ~ "no presenta bifurcación",
+      Bifurcacion == 2 ~ "bifurcado a la altura del DAP",
+      Bifurcacion == 1 ~ "bifurcado por debajo del DAP",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  select(
+    ID = IDENTF, Depart, Estación,
+    Num_ramas_XX:Parasitos_XX, Localidad:Suelo,
+    Forma_leg:Bif_leg
+  ) %>%
+  select(
+    ID, Depart, Provincia, Distrito, Localidad, Estación,
+    DAP:Altura_total, Num_ramas_XX,
+    Forma_arbol, Forma_leg,
+    Calidad_tronco, Cal_tronq_leg,
+    Produccion_frutos, Prod_fru_leg,
+    Calidad_frutos, Cal_fru_leg,
+    Calidad_follaje, Cal_foll_leg,
+    Bifurcacion, Bif_leg,
+    `fito_IIhEd _k`:Parasitos_XX, Carbonatos:Suelo
+  ) %>%
+  mutate(across(Forma_arbol:Parasitos_XX, as.factor))
+
+str(datos)
+
 ```
 
 ```{r}
