@@ -25,6 +25,8 @@ library(FSA)
 library(factoextra)
 library(corrplot)
 library(magrittr)
+library(shiny)
+library(DataExplorer)
 source('https://inkaverse.com/setup.r')
 
 cat("Project: ", getwd(), "\n")
@@ -88,12 +90,12 @@ datos <- gs %>%
     )
   ) %>%
   select(
-    ID = IDENTF, Depart, Estación,
+    Depart, Estación,
     Num_ramas_XX:Parasitos_XX, Localidad:Suelo,
     Forma_leg:Bif_leg
   ) %>%
   select(
-    ID, Depart, Provincia, Distrito, Localidad, Estación,
+    Depart, Provincia, Distrito, Localidad, Estación,
     DAP:Altura_total, Num_ramas_XX,
     Forma_arbol, Forma_leg,
     Calidad_tronco, Cal_tronq_leg,
@@ -103,18 +105,15 @@ datos <- gs %>%
     Bifurcacion, Bif_leg,
     `fito_IIhEd _k`:Parasitos_XX, Carbonatos:Suelo
   ) %>%
-  mutate(across(Forma_arbol:Parasitos_XX, as.factor))
+  mutate(across(c(Forma_arbol:Parasitos_XX, Suelo), as.factor))
 
 str(datos)
 
+summary(datos)
 ```
 
 ```{r}
-ley %>% kable(caption = "Interstock grafting treatments", align = 'c')
-
-rdt %>% kable(caption = "Evaluation of the agronomic characteristics of mango", align = 'c')
-
-fru %>% kable(caption = "Evaluation of mango fruit quality", align = 'c')
+datos %>% kable(caption = "Evaluation of mesquite trees", align = 'c')
 ```
 
 # Data summary
@@ -122,6 +121,8 @@ fru %>% kable(caption = "Evaluation of mango fruit quality", align = 'c')
 Summary of the number of data points recorded for each treatment and evaluated variable.
 
 ```{r}
+create_report(datos)
+
 sm <- rdt %>% 
   group_by(year, treat) %>% 
   summarise(across(height:sproud, ~ sum(!is.na(.))))
