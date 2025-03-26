@@ -49,19 +49,19 @@ library(googlesheets4)
 datos <- gs %>%
   range_read("total") %>%
   mutate(
-    Forma_leg = case_when(
+    Forma_arbol_descripcion = case_when(
       Forma_arbol == 3 ~ "un solo tallo",
       Forma_arbol == 2 ~ "intermedios",
       Forma_arbol == 1 ~ "múltiples tallos",
       TRUE ~ NA_character_
     ),
-    Cal_tronq_leg = case_when(
+    Calidad_tronco_descripcion = case_when(
       Calidad_tronco == 3 ~ "sin defectos",
       Calidad_tronco == 2 ~ "regular defectos",
       Calidad_tronco == 1 ~ "defectuoso",
       TRUE ~ NA_character_
     ),
-    Prod_fru_leg = case_when(
+    Produccion_frutos_descripcion = case_when(
       Produccion_frutos == 4 ~ "100% de las ramas",
       Produccion_frutos == 3 ~ "75% de las ramas",
       Produccion_frutos == 2 ~ "50% de las ramas",
@@ -69,20 +69,20 @@ datos <- gs %>%
       Produccion_frutos == 0 ~ "Sin frutos",
       TRUE ~ NA_character_
     ),
-    Cal_fru_leg = case_when(
+     Calidad_frutos_descripcion = case_when(
       Calidad_frutos == 3 ~ "muy dulce",
       Calidad_frutos == 2 ~ "dulce",
       Calidad_frutos == 1 ~ "muy amargo",
       Calidad_frutos == 0 ~ "amargo",
       TRUE ~ NA_character_
     ),
-    Cal_foll_leg = case_when(
+    Calidad_follaje_descripcion = case_when(
       Calidad_follaje == 3 ~ "total de las ramas",
       Calidad_follaje == 2 ~ "2/3 de las ramas",
       Calidad_follaje == 1 ~ "1/3 de las ramas",
       TRUE ~ NA_character_
     ),
-    Bif_leg = case_when(
+   Bifurcacion_descripcion = case_when(
       Bifurcacion == 3 ~ "no presenta bifurcación",
       Bifurcacion == 2 ~ "bifurcado a la altura del DAP",
       Bifurcacion == 1 ~ "bifurcado por debajo del DAP",
@@ -90,19 +90,19 @@ datos <- gs %>%
     )
   ) %>%
   select(
-    Depart, Estación,
+   Departamento = "Depart", Estación,
     Num_ramas_XX:Parasitos_XX, Localidad:Suelo,
-    Forma_leg:Bif_leg
+     Forma_arbol_descripcion:Bifurcacion_descripcion
   ) %>%
   select(
-    Depart, Provincia, Distrito, Localidad, Estación,
+   Departamento, Provincia, Distrito, Localidad, Estación,
     DAP:Altura_total, Num_ramas_XX,
-    Forma_arbol, Forma_leg,
-    Calidad_tronco, Cal_tronq_leg,
-    Produccion_frutos, Prod_fru_leg,
-    Calidad_frutos, Cal_fru_leg,
-    Calidad_follaje, Cal_foll_leg,
-    Bifurcacion, Bif_leg,
+    Forma_arbol, Forma_arbol_descripcion,
+    Calidad_tronco, Calidad_tronco_descripcion,
+    Produccion_frutos, Produccion_frutos_descripcion,
+    Calidad_frutos, Calidad_frutos_descripcion,
+    Calidad_follaje, Calidad_follaje_descripcion,
+    Bifurcacion, Bifurcacion_descripcion,
     `fito_IIhEd _k`:Parasitos_XX, Carbonatos:Suelo
   ) %>%
   mutate(across(c(Forma_arbol:Parasitos_XX, Suelo), as.factor))
@@ -110,6 +110,14 @@ datos <- gs %>%
 str(datos)
 
 summary(datos)
+
+data_coordenadas <- gs %>%
+  range_read("total") %>%
+  select(
+   Individuo = "IDENTF", Departamento = "Depart", Provincia,
+   Distrito,Localidad,Estación,UTM_X,UTM_Y,UTM_E_suelo,
+   UTM_N_suelo) 
+
 ```
 
 ```{r}
