@@ -118,6 +118,7 @@ data_coordenadas <- gs %>%
    Distrito,Localidad,Estación,UTM_X,UTM_Y,UTM_E_suelo,
    UTM_N_suelo) 
 
+str(data_coordenadas)
 ```
 
 ```{r}
