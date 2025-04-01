@@ -18,15 +18,15 @@ execute:
 
 ```{r}
 #| label:  setup
-library(emmeans)
 library(corrplot)
 library(multcomp)
-library(FSA)
 library(factoextra)
 library(corrplot)
-library(magrittr)
-library(shiny)
-library(DataExplorer)
+library(explore)
+library(dplyr)
+library(textshape)
+library(googlesheets4)
+library(dlookr)
 source('https://inkaverse.com/setup.r')
 
 cat("Project: ", getwd(), "\n")
@@ -42,9 +42,6 @@ url <- "https://docs.google.com/spreadsheets/d/19zJF9ti9AQhOCTenP6UqL0jA8Anl1s0r
 
 gs <- url %>% 
   as_sheets_id()
-
-library(dplyr)
-library(googlesheets4)
 
 datos <- gs %>%
   range_read("total") %>%
@@ -90,12 +87,12 @@ datos <- gs %>%
     )
   ) %>%
   select(
-   Departamento = "Depart", Estación,
+   Individuo, Departamento = "Depart", Estación,
     Num_ramas_XX:Parasitos_XX, Localidad:Suelo,
      Forma_arbol_descripcion:Bifurcacion_descripcion
   ) %>%
   select(
-   Departamento, Provincia, Distrito, Localidad, Estación,
+   Individuo, Departamento, Provincia, Distrito, Localidad, Estación,Cuenca,
     DAP:Altura_total, Num_ramas_XX,
     Forma_arbol, Forma_arbol_descripcion,
     Calidad_tronco, Calidad_tronco_descripcion,
@@ -111,11 +108,24 @@ str(datos)
 
 summary(datos)
 
+data_variables <- datos %>% 
+  select(Individuo, Departamento, Provincia, Distrito, Localidad, Estación,Cuenca,
+    DAP:Altura_total,
+    Forma_arbol,
+    Calidad_tronco, 
+    Produccion_frutos, 
+    Calidad_frutos,
+    Calidad_follaje, 
+    Bifurcacion, 
+    `fito_IIhEd _k`:Parasitos_XX, Carbonatos:pH)
+
+str(data_variables)
+
 data_coordenadas <- gs %>%
   range_read("total") %>%
   select(
-   Individuo = "IDENTF", Departamento = "Depart", Provincia,
-   Distrito,Localidad,Estación,UTM_X,UTM_Y,UTM_E_suelo,
+   Individuo, Departamento = "Depart", Provincia,
+   Distrito, Localidad, Estación, Cuenca, UTM_X,UTM_Y, UTM_E_suelo,
    UTM_N_suelo) 
 
 str(data_coordenadas)
@@ -123,341 +133,176 @@ str(data_coordenadas)
 
 ```{r}
 datos %>% kable(caption = "Evaluation of mesquite trees", align = 'c')
+
+data_coordenadas %>% kable(caption = "Location of mesquite trees", align = 'c')
 ```
 
 # Data summary
 
-Summary of the number of data points recorded for each treatment and evaluated variable.
+Descriptive statistics of the variables evaluated.
 
 ```{r}
-create_report(datos)
-
-sm <- rdt %>% 
-  group_by(year, treat) %>% 
-  summarise(across(height:sproud, ~ sum(!is.na(.))))
+sm <- data_variables %>% 
+  group_by(Departamento) %>% 
+  summarise(across(DAP:pH, ~ sum(!is.na(.))))
 
 sm
 
-sm <- fru %>% 
-  group_by(year, treat) %>% 
-  summarise(across(weigth:diameter_average, ~ sum(!is.na(.))))
+descriptive_numerics <- data_variables %>% 
+  dlookr::describe() %>% 
+  select(Variables = "described_variables", n:kurtosis, min = "p00", q1 = "p25", 
+         median = "p50", q3 = "p75", max = "p100")
 
-sm
+descriptive_numerics
+
+data_variables %>% 
+  dlookr::plot_hist_numeric()
+
+data_variables %>% 
+  group_by(Departamento) %>% 
+  dlookr::plot_box_numeric()
+
+data_variables %>% 
+  dlookr::plot_qq_numeric()
+
+descriptive_categoricals <- data_variables %>% 
+  dlookr::diagnose_category() %>% 
+  select(-rank)
+
+descriptive_categoricals
+  
+dlookr::plot_bar_category(data_variables)
 ```
 
-# Meteorological data
-
-Climatic conditions of the study area located in the Tambogrande district, Piura region.
-
-```{r}
-met <- range_read(ss = gs, sheet = "clima") %>% 
-  mutate(date = as_date(Fecha))
-
-scale <- 2
-
-plot <- met %>% 
-  ggplot(aes(x = date)) +
-  geom_line(aes(y = TMax, color = "Tmax (°C)"), size= 0.8, linetype = "longdash") + 
-  geom_line(aes(y = TMin, color = "Tmin (°C)"), size= 0.8, linetype = "dotted") +
-  geom_bar(aes(y = PP/scale)
-            , stat="identity", size=.1, fill="blue", color="black", alpha=.4) +
-  geom_line(aes(y = HR/scale, color = "HR (%)"), size = 0.8, linetype = "twodash") +
-  scale_color_manual("", values = c("skyblue", "red", "blue")) +
-  scale_y_continuous(limits = c(0, 50)
-                     , expand = c(0, 0)
-                     , name = "Temperature (°C)"
-                     , sec.axis = sec_axis(~ . * scale, name = "Precipitation (mm)")
-                     ) +
-  scale_x_date(date_breaks = "3 month", date_labels = "%b-%Y", name = NULL) +
-  theme_minimal_grid() +
-  theme(legend.position = "top") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-plot %>% 
-  ggsave2(plot = ., "submission/Figure_2.jpg", units = "cm"
-         , width = 25, height = 15)
-
-plot %>% 
-  ggsave2(plot = ., "submission/Figure_2.eps", units = "cm"
-         , width = 25, height = 15)
-
-knitr::include_graphics("submission/Figure_2.jpg")
-```
-
-# Objetives
-
-Evaluate the effect of the rootstock-interstock interaction on the agronomic traits and fruit biometrics of the mango crop in the San Lorenzo Valley.
-
-## Specific Objective 1
-
-Determine the effect of the rootstock-interstock interaction on the agronomic characteristics of mango.
-
-### Plant height
-
-```{r}
-trait <- "height"
-
-lmm <- paste({{trait}}, "~ 1 + (1|block) + stock*edge") %>% as.formula()
-
-lmd <- paste({{trait}}, "~ block + stock*edge") %>% as.formula()
-
-rmout <- rdt %>% 
-  remove_outliers(formula = lmm
-                  , drop_na = T, plot_diag = T)
-
-rmout$diagplot
-
-rmout$outliers
-
-model <- rmout$data$clean %>% 
-  aov(formula = lmd, .)
-
-anova(model)
-
-mc1 <- emmeans(model, ~ edge|stock) %>%
-  cld(Letters = letters, reversed = T) %>% 
-  mutate(across(".group", ~ trimws(.))) %>% 
-  rename(sig1 = ".group")
-
-mc2 <- emmeans(model, ~ stock|edge) %>%
-  cld(Letters = letters, reversed = T) %>% 
-  mutate(across(".group", ~ trimws(.))) %>% 
-  mutate(across(".group", ~ toupper(.))) %>% 
-  rename(sig2 = ".group")
-
-mc <- merge(mc2, mc1) %>% 
-  unite(col = "group", c("sig2", "sig1"), sep = "")
-
-mc %>% kable()
-
-p1a <- mc %>% 
-  plot_smr(x = "stock"
-           , y = "emmean"
-           , group = "edge"
-           , sig = "group"
-           , error = "SE"
-           , color = T
-           , xlab = "Rootstock"
-           , ylab = "Plant height (m)"
-           , glab = "Interstock"
-           , ylimits = c(0, 6, 2)
-           , 
-           )
-
-p1a
-```
-
-### Sproud
-
-```{r}
-trait <- "sproud"
-
-lmm <- paste({{trait}}, "~ 1 + (1|block) + stock*edge") %>% as.formula()
-
-lmd <- paste({{trait}}, "~ block + stock*edge") %>% as.formula()
-
-rmout <- rdt %>% 
-  remove_outliers(formula = lmm
-                  , drop_na = T, plot_diag = T)
-
-rmout$diagplot
-
-rmout$outliers
-
-model <- rmout$data$clean %>% 
-  aov(formula = lmd, .)
-
-anova(model)
-
-mc1 <- emmeans(model, ~ edge|stock) %>%
-  cld(Letters = letters, reversed = T) %>% 
-  mutate(across(".group", ~ trimws(.))) %>% 
-  rename(sig1 = ".group")
-
-mc2 <- emmeans(model, ~ stock|edge) %>%
-  cld(Letters = letters, reversed = T) %>% 
-  mutate(across(".group", ~ trimws(.))) %>% 
-  mutate(across(".group", ~ toupper(.))) %>% 
-  rename(sig2 = ".group")
-
-mc <- merge(mc2, mc1) %>% 
-  unite(col = "group", c("sig2", "sig1"), sep = "")
-
-mc %>% kable()
-
-p1b <- mc %>% 
-  plot_smr(x = "stock"
-           , y = "emmean"
-           , group = "edge"
-           , sig = "group"
-           , error = "SE"
-           , color = T
-           , xlab = "Rootstock"
-           , ylab = "Sproud ('%')"
-           , glab = "Interstock"
-           , ylimits = c(0, 100, 20)
-           )
-
-p1b 
-```
-
-### Number of fruits
-
-```{r}
-trait <- "n_fruits"
-
-lmm <- paste({{trait}}, "~ 1 + (1|block) + year + stock*edge + (1 + year|treat)") %>% as.formula()
-
-lmd <- paste({{trait}}, "~ block + year + stock*edge") %>% as.formula()
-
-rmout <- rdt %>% 
-  remove_outliers(formula = lmm
-                  , drop_na = T, plot_diag = T)
-
-rmout$diagplot
-
-rmout$outliers
-
-model <- rmout$data$clean %>% 
-  aov(formula = lmd, .)
-
-anova(model)
-
-mc1 <- emmeans(model, ~ edge|stock|year) %>%
-  cld(Letters = letters, reversed = T) %>% 
-  mutate(across(".group", ~ trimws(.))) %>% 
-  rename(sig1 = ".group")
-
-mc2 <- emmeans(model, ~ year|edge|stock) %>%
-  cld(Letters = letters, reversed = T) %>% 
-  mutate(across(".group", ~ trimws(.))) %>% 
-  mutate(across(".group", ~ toupper(.))) %>% 
-  rename(sig2 = ".group")
-
-mc <- merge(mc2, mc1) %>% 
-  unite(col = "group", c("sig2", "sig1"), sep = "")
-
-mc %>% kable()
-
-p1c <- mc %>% 
-  plot_smr(type = "bar"
-           , x = "year"
-           , y = "emmean"
-           , group = "edge"
-           , sig = "group"
-           , error = "SE"
-           , color = T
-           , xlab = "Year"
-           , ylab = "Fruits number"
-           , glab = "Interstock"
-           , ylimits = c(0, 320, 60)
-           ) +
-  facet_wrap(. ~ stock, nrow = 2)
-
-p1c 
-```
-
-### Flowering
-
-```{r}
-trait <- "flowering"
-
-lmm <- paste({{trait}}, "~ 1 + (1|block) + year + stock*edge + (1 + year|treat)") %>% as.formula()
-
-lmd <- paste({{trait}}, "~ block + year + stock*edge") %>% as.formula()
-
-rmout <- rdt %>% 
-  remove_outliers(formula = lmm
-                  , drop_na = T, plot_diag = T)
-
-rmout$diagplot
-
-rmout$outliers
-
-model <- rmout$data$clean %>% 
-  aov(formula = lmd, .)
-
-anova(model)
-
-mc1 <- emmeans(model, ~ edge|stock|year) %>%
-  cld(Letters = letters, reversed = T) %>% 
-  mutate(across(".group", ~ trimws(.))) %>% 
-  rename(sig1 = ".group")
-
-mc2 <- emmeans(model, ~ year|edge|stock) %>%
-  cld(Letters = letters, reversed = T) %>% 
-  mutate(across(".group", ~ trimws(.))) %>% 
-  mutate(across(".group", ~ toupper(.))) %>% 
-  rename(sig2 = ".group")
-
-mc <- merge(mc2, mc1) %>% 
-  unite(col = "group", c("sig2", "sig1"), sep = "")
-
-mc %>% kable()
-
-p1d <- mc %>% 
-  plot_smr(type = "bar"
-           , x = "year"
-           , y = "emmean"
-           , group = "edge"
-           , sig = "group"
-           , error = "SE"
-           , color = T
-           , xlab = "Year"
-           , ylab = "Flowering ('%')"
-           , glab = "Interstock"
-           , ylimits = c(0, 100, 20)
-           ) +
-  facet_wrap(. ~ stock, nrow = 2)
-
-p1d
-```
-
-### Figure 3
-
-Univariate analysis of the variables that determine the agronomic characteristics of mango.
-
-```{r}
-legend <- cowplot::get_plot_component(p1a, 'guide-box-top', return_all = TRUE)
-
-p1 <- list(p1a + theme(legend.position="none")
-           , p1b + theme(legend.position="none")
-           , p1c + theme(legend.position="none")
-           , p1d + theme(legend.position="none")
-           ) %>% 
-  plot_grid(plotlist = ., ncol = 2
-            , labels = "auto"
-            , rel_heights = c(1, 2)
-            ) 
-
-fig <- plot_grid(legend, p1, ncol = 1, align = 'v', rel_heights = c(0.05, 1))
-
-fig %>% 
-  ggsave2(plot = ., "submission/Figure_3.jpg"
-         , units = "cm"
-         , width = 24
-         , height = 16
-         )
-
-fig %>% 
-  ggsave2(plot = ., "submission/Figure_3.eps"
-         , units = "cm"
-         , width = 24
-         , height = 16
-         )
-
-knitr::include_graphics("submission/Figure_3.jpg")
-```
-
-### Multivariate
+## Multivariate
 
 Principal Component Analysis (PCA) of agronomic traits in the mango crop based on the use of rootstock-interstock combinations.
 
 ```{r}
-mv <- rdt %>% 
-  group_by(stock, edge) %>% 
+data_pca <- data_variables %>% 
+      mutate(across(c(Forma_arbol:Parasitos_XX), as.numeric)) %>% 
+      select(-(Departamento:Cuenca)) %>% 
+      select(-(`fito_IIhEd _k`:Parasitos_XX)) %>% 
+      textshape::column_to_rownames(., loc = 1)
+
+str(data_pca)
+
+summary(data_pca)
+
+respca <- prcomp(data_pca, scale = TRUE)
+
+names(respca)
+
+head(respca$rotation)[, 1:5] #las coordenadas de los datos en el nuevo sistema rotado de coordenadas. 
+                              #Estas coordenadas se corresponden con los scores de los componentes principales.
+
+dim(respca$rotation) #Número de distintos componentes
+
+head(respca$x)[,1:5] #los vectores de los scores.
+
+respca$sdev #las desviaciones estándares de cada CP.
+
+respca$sdev^2  ## Varianza explicada por cada componente
+
+summary(respca)
+
+bipl1 <- fviz_pca_biplot(respca,
+axis = c(1, 2),
+label ="var",
+habillage = data_variables$Cuenca)
+
+bipl2 <- fviz_pca_biplot(respca,
+axis = c(1,3),
+label ="var",
+habillage = data_variables$Cuenca)
+
+bipl3 <- fviz_pca_biplot(respca,
+axis = c(2, 3),
+label ="var",
+habillage = data_variables$Cuenca)
+
+#comprobemos la importancia del componente 1
+xx<-respca$x
+xx<-as.data.frame(xx)
+base_datos$PC1<-xx$PC1
+base_datos$PC2<-xx$PC2
+base_datoscor <- subset(base_datos, select = -c(Alignment))
+head(base_datoscor)
+cor(base_datoscor)
+#otra función
+#princomp() 
+
+
+pca <- PCA(X = data_pca, scale.unit = T, graph = F)
+
+print(pca)
+
+head(pca$eig) #como ejemplo
+
+fviz_screeplot(pca) #visualizar eigenvalores (scree plot)
+
+fviz_pca_ind(pca) #Representación de observaciones sobre componentes principales.
+
+fviz_pca_var(pca) #Representación de variables sobre componentes principales.
+
+fviz_pca_var(pca,
+             col.var = "contrib", # Color by contributions to the PC
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE     # Avoid text overlapping
+)
+
+fviz_pca_ind(pca,
+             col.ind = "cos2", # Color by the quality of representation
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = FALSE     # Avoid text overlapping
+)
+
+
+fviz_contrib(pca,choice = "var") #Representa la contribución de filas/columnas de los resultados de un pca.
+
+
+fviz_pca_biplot(pca, repel = FALSE,
+                col.var = "#2E9FDF", # Variables color
+                col.ind = "#696969"  # Individuals color
+)
+
+fviz_pca_biplot(pca, repel = TRUE,
+                #geom= "point", #o text o geom=c("point", "text")
+                col.var = "#2E9FDF", # Variables color
+                col.ind = "#696969", # Individuals color
+                select.ind = list(contrib = 30)
+)
+
+grupo<-as.factor(datos$Cuenca)
+
+fviz_pca_ind(pca, label="none", habillage=datos$Cuenca)
+
+fviz_pca_ind(pca,
+             col.ind = grupo, # color by groups
+             palette = c("#00AFBB", "#FC4E07","#696969","blue", "pink"),
+             addEllipses = TRUE, # Concentration ellipses
+             ellipse.type = "confidence",
+             legend.title = "Groups",
+             repel = FALSE
+)
+
+fviz_pca_biplot(pca,
+             col.ind = grupo, # color by groups
+             palette = c("#00AFBB", "#FC4E07","#696969","blue", "pink"),
+             addEllipses = TRUE, # Concentration ellipses
+             ellipse.type = "confidence",
+             legend.title = "Groups",
+             repel = FALSE
+)
+
+
+
+
+
+
+mv <- data_variables %>% 
+  group_by(Cuenca) %>% 
   summarise(across(where(is.numeric), ~ mean(., na.rm = T))) %>%   
-  unite("treat", stock:edge, sep = "-") %>% 
    rename(Treat = treat
          , Height = height
          , Fruits = n_fruits
