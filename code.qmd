@@ -27,6 +27,9 @@ library(dplyr)
 library(textshape)
 library(googlesheets4)
 library(dlookr)
+library(cluster)
+library(NbClust)
+library(vegan)
 source('https://inkaverse.com/setup.r')
 
 cat("Project: ", getwd(), "\n")
@@ -176,156 +179,105 @@ dlookr::plot_bar_category(data_variables)
 
 ## Multivariate
 
-Principal Component Analysis (PCA) of agronomic traits in the mango crop based on the use of rootstock-interstock combinations.
+### Principal Component Analysis (PCA)
+
+Principal Component Analysis (PCA). Results of the contributions and correlation of the variables in the Principal Component Analysis (PCA).
 
 ```{r}
 data_pca <- data_variables %>% 
       mutate(across(c(Forma_arbol:Parasitos_XX), as.numeric)) %>% 
-      select(-(Departamento:Cuenca)) %>% 
-      select(-(`fito_IIhEd _k`:Parasitos_XX)) %>% 
-      textshape::column_to_rownames(., loc = 1)
+      select(-(Individuo:Cuenca)) %>% 
+      select(-(`fito_IIhEd _k`:Parasitos_XX)) %>%
+      select(-c(Altura_ram, Bifurcacion))
+      # textshape::column_to_rownames(., loc = 1)
 
 str(data_pca)
 
-summary(data_pca)
+res.pca <- PCA(X = data_pca, scale.unit = T, graph = F)
 
-respca <- prcomp(data_pca, scale = TRUE)
+summary(res.pca)
 
-names(respca)
+fviz_screeplot(res.pca)
 
-head(respca$rotation)[, 1:5] #las coordenadas de los datos en el nuevo sistema rotado de coordenadas. 
-                              #Estas coordenadas se corresponden con los scores de los componentes principales.
-
-dim(respca$rotation) #Número de distintos componentes
-
-head(respca$x)[,1:5] #los vectores de los scores.
-
-respca$sdev #las desviaciones estándares de cada CP.
-
-respca$sdev^2  ## Varianza explicada por cada componente
-
-summary(respca)
-
-bipl1 <- fviz_pca_biplot(respca,
-axis = c(1, 2),
-label ="var",
-habillage = data_variables$Cuenca)
-
-bipl2 <- fviz_pca_biplot(respca,
-axis = c(1,3),
-label ="var",
-habillage = data_variables$Cuenca)
-
-bipl3 <- fviz_pca_biplot(respca,
-axis = c(2, 3),
-label ="var",
-habillage = data_variables$Cuenca)
-
-#comprobemos la importancia del componente 1
-xx<-respca$x
-xx<-as.data.frame(xx)
-base_datos$PC1<-xx$PC1
-base_datos$PC2<-xx$PC2
-base_datoscor <- subset(base_datos, select = -c(Alignment))
-head(base_datoscor)
-cor(base_datoscor)
-#otra función
-#princomp() 
-
-
-pca <- PCA(X = data_pca, scale.unit = T, graph = F)
-
-print(pca)
-
-head(pca$eig) #como ejemplo
-
-fviz_screeplot(pca) #visualizar eigenvalores (scree plot)
-
-fviz_pca_ind(pca) #Representación de observaciones sobre componentes principales.
-
-fviz_pca_var(pca) #Representación de variables sobre componentes principales.
-
-fviz_pca_var(pca,
+fviz_pca_var(res.pca,
              col.var = "contrib", # Color by contributions to the PC
              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
              repel = TRUE     # Avoid text overlapping
 )
 
-fviz_pca_ind(pca,
-             col.ind = "cos2", # Color by the quality of representation
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             repel = FALSE     # Avoid text overlapping
-)
+grupo <- as.factor(datos$Estación)
 
+p1 <- fviz_pca_biplot(res.pca,
+                axes = c(1,2),
+                col.ind = grupo,
+                legend.title = "Estaciones",
+                geom.ind = "point",
+                repel = FALSE
+) +
+theme(
+    legend.position = "bottom",        # Leyenda abajo
+    legend.justification = "center",   # Centra la leyenda
+    legend.direction = "horizontal"    # Distribuye los elementos horizontalmente
+  ) +
+  guides(color = guide_legend(nrow = 1))
 
-fviz_contrib(pca,choice = "var") #Representa la contribución de filas/columnas de los resultados de un pca.
+# mv <- data_variables %>% 
+#   mutate(across(c(Forma_arbol:Parasitos_XX), as.numeric)) %>% 
+#   group_by(Estación) %>% 
+#   select(-(`fito_IIhEd _k`:Parasitos_XX)) %>%
+#       select(-c(Altura_ram, Bifurcacion, Cuenca)) %>% 
+#   select(-(Individuo:Localidad)) %>% 
+#   summarise(across(where(is.numeric), ~ mean(., na.rm = T)))
+#   
+# pca <- mv %>% 
+#   PCA(scale.unit = T, quali.sup = 1, graph = F) 
+# 
+# # summary
+# 
+# summary(pca, nbelements = Inf, nb.dec = 2)
+# 
+# f4a <- plot.PCA(x = pca, choix = "var"
+#                 , cex=0.8
+#                 , label = "var"
+#                 )
+# 
+# f4b <- plot.PCA(x = pca, choix = "ind"
+#                 , habillage = 1
+#                 , invisible = c("ind")
+#                 , cex=0.8
+#                 ) 
+```
 
+### Cluster Analysis
 
-fviz_pca_biplot(pca, repel = FALSE,
-                col.var = "#2E9FDF", # Variables color
-                col.ind = "#696969"  # Individuals color
-)
+Principal Component Analysis (PCA). Results of the contributions and correlation of the variables in the Principal Component Analysis (PCA).
 
-fviz_pca_biplot(pca, repel = TRUE,
-                #geom= "point", #o text o geom=c("point", "text")
-                col.var = "#2E9FDF", # Variables color
-                col.ind = "#696969", # Individuals color
-                select.ind = list(contrib = 30)
-)
+```{r}
+data_clust <- data_variables %>% 
+      mutate(across(c(Forma_arbol:Parasitos_XX), as.numeric)) %>% 
+      select(-(Departamento:Cuenca)) %>% 
+      select(-(`fito_IIhEd _k`:Parasitos_XX)) %>%  
+      textshape::column_to_rownames(., loc = 1)
 
-grupo<-as.factor(datos$Cuenca)
+data_clust <- scale(data_clust)
 
-fviz_pca_ind(pca, label="none", habillage=datos$Cuenca)
+m_distancia <- get_dist(data_clust, method = "euclidean")
 
-fviz_pca_ind(pca,
-             col.ind = grupo, # color by groups
-             palette = c("#00AFBB", "#FC4E07","#696969","blue", "pink"),
-             addEllipses = TRUE, # Concentration ellipses
-             ellipse.type = "confidence",
-             legend.title = "Groups",
-             repel = FALSE
-)
+fviz_nbclust(data_clust, pam, method = "wss")
 
-fviz_pca_biplot(pca,
-             col.ind = grupo, # color by groups
-             palette = c("#00AFBB", "#FC4E07","#696969","blue", "pink"),
-             addEllipses = TRUE, # Concentration ellipses
-             ellipse.type = "confidence",
-             legend.title = "Groups",
-             repel = FALSE
-)
+pm <- pam(data_clust,6)
 
+pm
 
+fviz_cluster(pm, data = data_clust)
 
+res <- hcut(data_clust, k = 6, stand = TRUE, method = "median")
 
+fviz_dend(res, rect = TRUE, cex = 0.59)
 
+dist.mat1 <- vegdist(cluster[,-1],method="jaccard") #
+dist.mat
 
-mv <- data_variables %>% 
-  group_by(Cuenca) %>% 
-  summarise(across(where(is.numeric), ~ mean(., na.rm = T))) %>%   
-   rename(Treat = treat
-         , Height = height
-         , Fruits = n_fruits
-         , Flowering = flowering
-         , Sproud = sproud)
-  
-pca <- mv %>% 
-  PCA(scale.unit = T, quali.sup = 1, graph = F) 
-
-# summary
-
-summary(pca, nbelements = Inf, nb.dec = 2)
-
-f4a <- plot.PCA(x = pca, choix = "var"
-                , cex=0.8
-                , label = "var"
-                )
-
-f4b <- plot.PCA(x = pca, choix = "ind"
-                , habillage = 1
-                , invisible = c("ind")
-                , cex=0.8
-                ) 
 ```
 
 ### Figure 4
@@ -347,24 +299,24 @@ pt1 <- fviz_eig(pca,
     y = "Variance (%)") +
   theme_minimal()
 
-pt2 <- fviz_contrib(pca,
+pt2 <- fviz_contrib(res.pca,
                      choice = "var", 
                      axes = 1, 
-                     top = 10,
+                     top = 17,
                      fill="white",
                      color ="darkblue",
                      sort.val = "desc") +
-  ylim(0, 50) + 
+  ylim(0, 12) + 
   labs(title = "Dim 1 - variables contribution") 
 
-pt3 <- fviz_contrib(pca,
+pt3 <- fviz_contrib(res.pca,
                      choice = "var", 
                      axes = 2, 
-                     top = 10,
+                     top = 17,
                      fill="white",
                      color ="darkblue",
                      sort.val = "desc") +
-  ylim(0, 80) + 
+  ylim(0, 12) + 
   labs(title = "Dim 2 - variables contribution") 
 
 png("corrplot_output.png", width = 800, height = 800, res = 150)  
@@ -397,290 +349,3 @@ ggsave2(plot = grid_final, "submission/Figure_4.eps", height = 30, width = 28, u
 knitr::include_graphics("submission/Figure_4.jpg")
 ```
 
-## Specific Objective 2
-
-Determine the effect of the rootstock-interstock interaction on the fruit biometrics of mango.
-
-### Fruit Weigth
-
-```{r}
-trait <- "weigth"
-
-lmm <- paste({{trait}}, "~ 1 + (1|block) + stock*edge") %>% as.formula()
-
-lmd <- paste({{trait}}, "~ block + stock*edge") %>% as.formula()
-
-rmout <- fru %>% 
-  remove_outliers(formula = lmm
-                  , drop_na = T, plot_diag = T)
-
-rmout$diagplot
-
-rmout$outliers
-
-model <- rmout$data$clean %>% 
-  aov(formula = lmd, .)
-
-anova(model)
-
-mc <- emmeans(model, ~ edge|stock) %>%
-  cld(Letters = letters, reversed = T) %>%
-  mutate(across(.group, trimws)) %>% 
-  rename(group = ".group")
-
-mc %>% kable()
-
-p2a <- mc %>% 
-  plot_smr(x = "stock"
-           , y = "emmean"
-           , group = "edge"
-           , sig = "group"
-           , error = "SE"
-           , color = T
-           , xlab = "Rootstock"
-           , ylab = "Fruit Weigth (g)"
-           , glab = "Interstock"
-           , ylimits = c(0, 600, 100)
-           , 
-           )
-
-p2a
-```
-
-### Fruit length
-
-```{r}
-trait <- "long"
-
-lmm <- paste({{trait}}, "~ 1 + (1|block) + stock*edge") %>% as.formula()
-
-lmd <- paste({{trait}}, "~ block + stock*edge") %>% as.formula()
-
-rmout <- fru %>% 
-  remove_outliers(formula = lmm
-                  , drop_na = T, plot_diag = T)
-
-rmout$diagplot
-
-rmout$outliers
-
-model <- rmout$data$clean %>% 
-  aov(formula = lmd, .)
-
-anova(model)
-
-mc <- emmeans(model, ~ edge|stock) %>%
-  cld(Letters = letters, reversed = T) %>%
-  mutate(across(.group, trimws)) %>% 
-  rename(group = ".group")
-
-mc %>% kable()
-
-p2b <- mc %>% 
-  plot_smr(x = "stock"
-           , y = "emmean"
-           , group = "edge"
-           , sig = "group"
-           , error = "SE"
-           , color = T
-           , xlab = "Rootstock"
-           , ylab = "Fruit length (mm)"
-           , glab = "Interstock"
-           , ylimits = c(0, 120, 20)
-           , 
-           )
-
-p2b
-```
-
-### Fruit diameter
-
-```{r}
-trait <- "diameter_average"
-
-lmm <- paste({{trait}}, "~ 1 + (1|block) + stock*edge") %>% as.formula()
-
-lmd <- paste({{trait}}, "~ block + stock*edge") %>% as.formula()
-
-rmout <- fru %>% 
-  remove_outliers(formula = lmm
-                  , drop_na = T, plot_diag = T)
-
-rmout$diagplot
-
-rmout$outliers
-
-model <- rmout$data$clean %>% 
-  aov(formula = lmd, .)
-
-anova(model)
-
-mc <- emmeans(model, ~ edge|stock) %>%
-  cld(Letters = letters, reversed = T) %>%
-  mutate(across(.group, trimws)) %>% 
-  rename(group = ".group")
-
-mc %>% kable()
-
-p2c <- mc %>% 
-  plot_smr(x = "stock"
-           , y = "emmean"
-           , group = "edge"
-           , sig = "group"
-           , error = "SE"
-           , color = T
-           , xlab = "Rootstock"
-           , ylab = "Fruit diameter (mm)"
-           , glab = "Interstock"
-           , ylimits = c(0, 100, 20)
-           , 
-           )
-
-p2c
-```
-
-### Table 2
-
-Descriptive statistics of the variables that determine the fruit biometrics of mango.
-
-```{r}
-
-sts <- Summarize(weigth  ~ stock*edge, data = fru, digits = 2, na.rm = TRUE)
-
-tb1a <- sts%>% 
-  merge(., mc) %>% 
-  mutate(Variable = "Fruit Weigth (g)") %>% 
-  dplyr::select(Variable, stock, edge, mean, sd, min, max, group) %>% 
-  rename(Rootstock = stock,
-         Interstock = edge,
-         Sig = group)
-
-sts <- Summarize(long  ~ stock*edge, data = fru, digits = 2, na.rm = TRUE)
-
-tb1b <- sts%>% 
-  merge(., mc) %>% 
-  mutate(Variable = "Fruit length (mm)") %>% 
-  dplyr::select(Variable, stock, edge, mean, sd, min, max, group) %>% 
-  rename(Rootstock = stock,
-         Interstock = edge,
-         Sig = group)
-
-sts <- Summarize(diameter_average ~ stock*edge, data = fru, digits = 2, na.rm = TRUE)
-
-tb1c <- sts%>% 
-  merge(., mc) %>% 
-  mutate(Variable = "Fruit diameter (mm)") %>% 
-  dplyr::select(Variable, stock, edge, mean, sd, min, max, group) %>% 
-  rename(Rootstock = stock,
-         Interstock = edge,
-         Sig = group)
-
-tb1 <- bind_rows(tb1a, tb1b, tb1c)
-
-tb1 %>% kable(align = 'c')
-
-tb1 %>%
-  write_sheet(ss = gs, sheet = "tb1")
-```
-
-### Multivariate
-
-Principal Component Analysis (PCA) of fruit biometrics in the mango crop based on the use of rootstock-interstock combinations.
-
-```{r}
-mv <- fru %>% 
-  group_by(stock, edge) %>% 
-  summarise(across(where(is.numeric), ~ mean(., na.rm = T))) %>%
-  dplyr::select(!c(diameter_1, diameter_2, n_fruits)) %>%
-  unite("treat", stock:edge, sep = "-") %>% 
-   rename(Treat = treat
-         , Weight = weigth
-         , Length = long
-         , Diameter = diameter_average)
-  
-pca <- mv %>% 
-  PCA(scale.unit = T, quali.sup = 1, graph = F) 
-
-# summary
-
-summary(pca, nbelements = Inf, nb.dec = 2)
-
-f5a <- plot.PCA(x = pca, choix = "var"
-                , cex=0.8
-                )
-
-f5b <- plot.PCA(x = pca, choix = "ind"
-                , habillage = 1
-                , invisible = c("ind")
-                , cex=0.8
-                ) 
-```
-
-### Figure 5
-
-Principal Component Analysis (PCA). Results of the contributions and correlation of the variables in the Principal Component Analysis (PCA).
-
-```{r}
-var <- get_pca_var(pca)
-
-pt1 <- fviz_eig(pca, 
-                addlabels=TRUE,
-                hjust = 0.05,
-                barfill="white",
-                barcolor ="darkblue",
-                linecolor ="white") + 
-  ylim(0, 80) + 
-  labs(
-    title = "PCA - percentage of explained variances",
-    y = "Variance (%)") +
-  theme_minimal()
-
-pt2 <- fviz_contrib(pca,
-                     choice = "var", 
-                     axes = 1, 
-                     top = 10,
-                     fill="white",
-                     color ="darkblue",
-                     sort.val = "desc") +
-  ylim(0, 60) + 
-  labs(title = "Dim 1 - variables contribution") 
-
-pt3 <- fviz_contrib(pca,
-                     choice = "var", 
-                     axes = 2, 
-                     top = 10,
-                     fill="white",
-                     color ="darkblue",
-                     sort.val = "desc") +
-  ylim(0, 100) + 
-  labs(title = "Dim 2 - variables contribution") 
-
-png("corrplot_output.png", width = 800, height = 800, res = 150)  
-corrplot(var$cor, 
-         method = "number",
-         tl.col = "black", 
-         tl.srt = 45)
-dev.off()
-
-img_corrplot <- ggdraw() + draw_image("corrplot_output.png")
-
-pt4 <- img_corrplot
-
-# Construcción del grid
-fila1 <- plot_grid(f5a, f5b, ncol = 2, labels = "auto", rel_widths = c(1, 1.2))
-
-columna_c <- plot_grid(pt1, pt2, pt3, ncol = 1, labels = "c")
-
-fila2 <- plot_grid(columna_c, pt4, ncol = 2, labels = c("", "d"), rel_widths = c(1, 1))
-
-grid_final <- plot_grid(fila1, fila2, ncol = 1, rel_heights = c(1, 1.2))
-
-grid_final
-
-
-ggsave2(plot = grid_final, "submission/Figure_5.jpg", height = 30, width = 28, units = "cm")
-
-ggsave2(plot = grid_final, "submission/Figure_5.eps", height = 30, width = 28, units = "cm")
-
-knitr::include_graphics("submission/Figure_5.jpg")
-```
