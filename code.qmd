@@ -255,28 +255,29 @@ Principal Component Analysis (PCA). Results of the contributions and correlation
 ```{r}
 data_clust <- data_variables %>% 
       mutate(across(c(Forma_arbol:Parasitos_XX), as.numeric)) %>% 
-      select(-(Departamento:Cuenca)) %>% 
-      select(-(`fito_IIhEd _k`:Parasitos_XX)) %>%  
-      textshape::column_to_rownames(., loc = 1)
+      select(-(Individuo:Cuenca)) %>% 
+      select(-(`fito_IIhEd _k`:Parasitos_XX)) 
+      # textshape::column_to_rownames(., loc = 1)
 
 data_clust <- scale(data_clust)
 
 m_distancia <- get_dist(data_clust, method = "euclidean")
 
 fviz_nbclust(data_clust, pam, method = "wss")
+fviz_nbclust(data_clust, pam, method = "silhouette")
+fviz_nbclust(data_clust, pam, method = "gap_stat")
 
-pm <- pam(data_clust,6)
+pm <- pam(data_clust,10)
 
 pm
 
-fviz_cluster(pm, data = data_clust)
+fviz_cluster(pm, data = data_clust, 
+             ellipse.type = "norm",
+              ggtheme = theme_minimal()) 
 
-res <- hcut(data_clust, k = 6, stand = TRUE, method = "median")
+res <- hcut(m_distancia, k = 10, stand = TRUE, method = "median")
 
-fviz_dend(res, rect = TRUE, cex = 0.59)
-
-dist.mat1 <- vegdist(cluster[,-1],method="jaccard") #
-dist.mat
+fviz_dend(res, rect = TRUE, cex = 0.59, horiz = TRUE)
 
 ```
 
