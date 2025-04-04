@@ -350,3 +350,42 @@ ggsave2(plot = grid_final, "submission/Figure_4.eps", height = 30, width = 28, u
 knitr::include_graphics("submission/Figure_4.jpg")
 ```
 
+
+# Broad-sense heritability
+
+```{r}
+data_variables %>% names()
+
+data_variables %>% str()
+
+trait <- "DAP"
+
+hr <- data_variables %>% 
+  mutate(across(1:Cuenca, ~ as.factor(.))) %>% 
+  H2cal(data = .
+        , trait = trait
+        , gen.name = "Localidad"
+        , rep.n = 1
+        , fixed.model = "0 + (1|Departamento) + Localidad"
+        , random.model = "1 + (1|Departamento) + (1|Localidad)"
+        , emmeans = FALSE
+        , plot_diag = TRUE
+        , outliers.rm = TRUE
+            )
+
+hr$model %>% summary()
+
+hr$tabsmr %>% kable(caption = "Variance component table")
+
+hr$blues %>% arrange(desc(DAP)) %>% kable(caption = "BLUEs")
+
+hr$blups %>% arrange(desc(DAP)) %>% kable(caption = "BLUPs")
+```
+
+
+
+
+
+
+
+
