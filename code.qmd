@@ -284,42 +284,52 @@ fviz_dend(res, rect = TRUE, cex = 0.59, horiz = TRUE)
 # Traits distribution by population
 
 ```{r}
-label_dist <- c(mstd_mtr = "StemDiameter.mtr (cm)"
-                , ndflw_flw =  "DaysFlowering.flw (days)" 
-                , ndpm_mtr = "DaysMaturity.mtr (days)"
-                , plth_flw = "PlantHeight.flw (cm)"
-                , plth_mtr = "PlantHeight.mtr (cm)"
-                , pnlg_flw = "PanicleLength.flw (cm)"
-                , pnlg_mtr = "PanicleLength.mtr (cm)"
-                , pnwd_flw = "PanicleWidth.flw (cm)"
-                , pnwd_mtr = "PanicleWidth.mtr (cm)"
-                , yield_hrv = "Yield.hrv (g)"
-                )
 
-dist <- F7_stgII_blups %>% 
-  filter(!type %in% c("checks", "parents")) %>% 
-  select(!matches("wl|l2w|w2l|rlw|sdyp|yplt|trial")) %>% 
-  pivot_longer(!c(line, pop, num, type)) %>% 
-  plot_raw(type = "boxplot"
-           , x = "pop"
-           , y = "value"
-           , legend = "none"
-           , xrotation = c(45, 1, 1)
-           ) + 
-  facet_wrap(vars(name), ncol = 5, scales = "free_y"
-             , strip.position = "left"
-             , labeller = as_labeller(label_dist)
-             ) +
-  labs(y = "", x = "") +
-  geom_violin(trim=FALSE)+
-  geom_boxplot(width=0.1)
+data_dist <- data_variables %>% 
+      select(-(Individuo:Estación)) %>% 
+      select(-(`fito_IIhEd _k`:Parasitos_XX)) %>% 
+      select(-(Carbonatos:pH))
 
-dist$layers[[1]] <- NULL
-  
-dist %>% 
-  ggsave2(filename = "files/Fig4.tiff", units = "cm", width = 35, height = 12)
+str(data_dist)
 
-"files/Fig4.jpg" %>% include_graphics()
+dist_num <- data_dist %>%
+  pivot_longer(
+    cols = c(DAP, Diam_copa, Altura_ram, Altura_total), 
+    names_to = "Variable",
+    values_to = "Valor"
+  ) %>%
+  ggplot(aes(x = Cuenca, y = Valor, fill = Cuenca)) +
+  geom_violin(trim = FALSE, alpha = 0.5) +
+  geom_boxplot(width = 0.1, outlier.shape = NA) +
+  facet_wrap(~ Variable, scales = "free_y", ncol = 2, strip.position = "left") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    strip.placement = "outside",
+    strip.text = element_text(face = "bold"),
+    legend.position = "none"
+  ) +
+  labs(x = "", y = "")
+
+dist_cat <- data_dist %>%
+  pivot_longer(
+    cols = c(Forma_arbol, Calidad_tronco, Produccion_frutos, 
+             Calidad_frutos, Calidad_follaje, Bifurcacion),
+    names_to = "Variable",
+    values_to = "Categoria"
+  ) %>%
+  mutate(Categoria = as.factor(Categoria)) %>%
+  ggplot(aes(x = Cuenca, fill = Categoria)) +
+  geom_bar(position = "fill") +  
+  facet_wrap(~ Variable, scales = "free_y", ncol = 3, strip.position = "left") +
+  theme_minimal() +
+  theme(
+    strip.text = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "right"
+  ) +
+  labs(x = "Cuenca", y = "Proporción", fill = "Categoría") +
+   guides(fill = "none")
 ```
 
 # Broad-sense heritability
