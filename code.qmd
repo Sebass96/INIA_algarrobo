@@ -336,27 +336,67 @@ dist_cat <- data_dist %>%
 
 ```{r}
 data_variables %>% names()
-
 data_variables %>% str()
 
-trait <- "DAP"
+h2d <- data_variables %>% 
+  dplyr::select(1:Calidad_follaje) %>% 
+  mutate(across(1:Cuenca, ~ as.factor(.))) %>%
+  mutate(across(DAP:length(.), ~ as.numeric(.))) 
 
-hr <- data_variables %>% 
-  mutate(across(1:Cuenca, ~ as.factor(.))) %>% 
-  H2cal(data = .
+str(h2d)
+
+group <- "Localidad"
+
+mgroup <- h2 %>% 
+  select({{group}}) %>% 
+  unique() %>% 
+  deframe() %>% as.vector()
+
+rslt <- 7:length(mgroup) %>% map(\(a) {
+  
+  npop <- mgroup[a]
+  
+  gpop <- h2d %>% 
+    filter(.[[group]] %in% {{npop}}) 
+  
+  # str(gpop)
+  
+  var <- match("DAP", names(h2d))
+  
+  groups <- var:length(h2d) %>% map(\(b) {
+    
+    trait <- names(h2d)[b]
+    
+    h2d %>%  
+       H2cal(data = .
         , trait = trait
-        , gen.name = "Localidad"
+        , gen.name = "Cuenca"
         , rep.n = 1
-        , fixed.model = "0 + (1|Departamento) + Localidad"
-        , random.model = "1 + (1|Departamento) + (1|Localidad)"
+        , fixed.model = "0 + (1|Departamento) + Cuenca"
+        , random.model = "1 + (1|Departamento) + (1|Cuenca)"
         , emmeans = FALSE
         , plot_diag = TRUE
         , outliers.rm = TRUE
-            )
+        , trial = npop
+        )
+  })
+})
 
-hr$model %>% summary()
 
-hr$tabsmr %>% kable(caption = "Variance component table")
+h2tab <- 1:length(rslt) %>% map(\(x) {
+  
+  nlst <- rslt[[x]]
+  
+  1:length(rslt) %>% map(\(z) {
+      rslt[[x]][[z]][["tabsmr"]] 
+    })
+  }) %>% 
+  bind_rows() %>% 
+  rename(Trait = trait, Heritability = H2.c, Population = trial) %>% 
+  dplyr::select(!matches("H2|rep|env|year"))
+
+
+h2tab %>% kable(caption = "Variance component table")
 
 hr$blues %>% arrange(desc(DAP)) %>% kable(caption = "BLUEs")
 
