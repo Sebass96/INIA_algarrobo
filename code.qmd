@@ -338,31 +338,93 @@ str(data_dist)
 
 ```{r}
 data_variables %>% names()
-
 data_variables %>% str()
 
-trait <- "DAP"
+#> sebas no te olvides de limpiar las cabeceras siempre
 
-hr <- data_variables %>% 
-  mutate(across(1:Cuenca, ~ as.factor(.))) %>% 
-  H2cal(data = .
+h2d <- data_variables %>% 
+  dplyr::select(1:Calidad_follaje) %>% 
+  mutate(across(1:Cuenca, ~ as.factor(.))) %>%
+  mutate(across(DAP:length(.), ~ as.numeric(.))) %>% 
+  rename_with(~tolower(.)) %>% # poner en minusculas
+  rename_with(~iconv(x = ., to = "ASCII//TRANSLIT")) # quitar todos las letras extrañas
+
+str(h2d)
+
+group <- "departamento"
+
+mgroup <- h2d %>% 
+  dplyr::select({{group}}) %>% 
+  unique() %>% 
+  deframe() %>% as.vector()
+
+rslt <- 1:length(mgroup) %>% map(\(a) {
+  
+  npop <- mgroup[a]
+  
+  cat("\n#>", npop)
+  
+  gpop <- h2d %>% 
+    filter(.[[group]] %in% {{npop}}) %>% 
+    dplyr::select(!c(calidad_frutos, calidad_follaje)) # al parecer no tiene variabilidad
+  
+  # str(gpop)
+  
+  nvar <- match("dap", names(gpop))
+  
+  groups <- nvar:length(gpop) %>% map(\(b) {
+    
+    trait <- names(gpop)[b]
+    
+    cat("\n#>", trait)
+    
+    gpop %>%  
+       H2cal(data = .
         , trait = trait
-        , gen.name = "Localidad"
-        , rep.n = 1
-        , fixed.model = "0 + (1|Departamento) + Localidad"
-        , random.model = "1 + (1|Departamento) + (1|Localidad)"
+        , gen.name = "localidad"
+        , rep.n = 8 # maximo valor de n localidades
+        , fixed.model = "0 + (1|provincia) + localidad"
+        , random.model = "1 + (1|provincia) + (1|localidad)"
         , emmeans = FALSE
         , plot_diag = TRUE
         , outliers.rm = TRUE
-            )
+        , trial = npop
+        )
+  })
+})
 
-hr$model %>% summary()
+h2tab <- 1:length(rslt) %>% map(\(x) {
+  
+  nlst <- rslt[[x]]
+  
+  1:length(nlst) %>% map(\(z) {
+      rslt[[x]][[z]][["tabsmr"]] 
+    })
+  }) %>% 
+  bind_rows() %>% 
+  rename(Trait = trait, Heritability = H2.s, Population = trial, Localidad = geno) %>% 
+  dplyr::select(!matches("H2|rep|env|year"))
 
-hr$tabsmr %>% kable(caption = "Variance component table")
 
-hr$blues %>% arrange(desc(DAP)) %>% kable(caption = "BLUEs")
+h2tab %>% kable(caption = "Variance component table")
 
-hr$blups %>% arrange(desc(DAP)) %>% kable(caption = "BLUPs")
+
+h2blues <- 1:length(rslt) %>% map(\(x) {
+  
+  nlst <- rslt[[x]]
+  
+  1:length(nlst) %>% map(\(z) {
+      rslt[[x]][[z]][["blues"]] %>% 
+      dplyr::select(!smith.w) %>% 
+      pivot_longer(!c(trial, localidad), names_to = "trait")
+    })
+  })  %>% 
+  bind_rows() %>% 
+  ungroup() %>% 
+  group_by(trait) %>% 
+  arrange(desc(value), .by_group = T)
+
+h2blues %>% kable(caption = "BLUEs")
 ```
 
 ### Figure 4
