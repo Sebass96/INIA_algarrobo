@@ -330,6 +330,8 @@ dist_cat <- data_dist %>%
   ) +
   labs(x = "Cuenca", y = "Proporción", fill = "Categoría") +
    guides(fill = "none")
+
+str(data_dist)
 ```
 
 # Broad-sense heritability
