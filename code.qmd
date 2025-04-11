@@ -23,15 +23,16 @@ library(multcomp)
 library(factoextra)
 library(corrplot)
 library(explore)
+library(gridGraphics)
 library(dplyr)
 library(textshape)
 library(googlesheets4)
-library(dlookr)
 library(cluster)
-library(NbClust)
 library(vegan)
+library(NbClust)
 source('https://inkaverse.com/setup.r')
 
+set.seed(2025)
 cat("Project: ", getwd(), "\n")
 session_info()
 ```
@@ -105,6 +106,7 @@ datos <- gs %>%
     Bifurcacion, Bifurcacion_descripcion,
     `fito_IIhEd _k`:Parasitos_XX, Carbonatos:Suelo
   ) %>%
+  mutate(across(c(1:7), as.factor)) %>% 
   mutate(across(c(Forma_arbol:Parasitos_XX, Suelo), as.factor))
 
 str(datos)
@@ -145,150 +147,124 @@ data_coordenadas %>% kable(caption = "Location of mesquite trees", align = 'c')
 Descriptive statistics of the variables evaluated.
 
 ```{r}
-sm <- data_variables %>% 
-  group_by(Departamento) %>% 
-  summarise(across(DAP:pH, ~ sum(!is.na(.))))
-
-sm
-
-descriptive_numerics <- data_variables %>% 
-  dlookr::describe() %>% 
-  select(Variables = "described_variables", n:kurtosis, min = "p00", q1 = "p25", 
-         median = "p50", q3 = "p75", max = "p100")
-
-descriptive_numerics
-
-data_variables %>% 
-  dlookr::plot_hist_numeric()
-
-data_variables %>% 
-  group_by(Departamento) %>% 
-  dlookr::plot_box_numeric()
-
-data_variables %>% 
-  dlookr::plot_qq_numeric()
-
-descriptive_categoricals <- data_variables %>% 
-  dlookr::diagnose_category() %>% 
-  select(-rank)
-
-descriptive_categoricals
-  
-dlookr::plot_bar_category(data_variables)
+# sm <- data_variables %>% 
+#   group_by(Departamento) %>% 
+#   summarise(across(DAP:pH, ~ sum(!is.na(.))))
+# 
+# sm
+# 
+# descriptive_numerics <- data_variables %>% 
+#   dlookr::describe() %>% 
+#   select(Variables = "described_variables", n:kurtosis, min = "p00", q1 = "p25", 
+#          median = "p50", q3 = "p75", max = "p100")
+# 
+# descriptive_numerics
+# 
+# data_variables %>% 
+#   dlookr::plot_hist_numeric()
+# 
+# data_variables %>% 
+#   group_by(Departamento) %>% 
+#   dlookr::plot_box_numeric()
+# 
+# data_variables %>% 
+#   dlookr::plot_qq_numeric()
+# 
+# descriptive_categoricals <- data_variables %>% 
+#   dlookr::diagnose_category() %>% 
+#   select(-rank)
+# 
+# descriptive_categoricals
+#   
+# dlookr::plot_bar_category(data_variables)
 ```
 
-# Multivariate
-
-## Principal Component Analysis (PCA)
-
-Principal Component Analysis (PCA). Results of the contributions and correlation of the variables in the Principal Component Analysis (PCA).
+# Shannon–Weaver diversity index (H′)
 
 ```{r}
-data_pca <- data_variables %>% 
-      mutate(across(c(Forma_arbol:Parasitos_XX), as.numeric)) %>% 
-      select(-(Individuo:Cuenca)) %>% 
-      select(-(`fito_IIhEd _k`:Parasitos_XX)) %>%
-      select(-c(Altura_ram, Bifurcacion))
-      # textshape::column_to_rownames(., loc = 1)
+h <- datos %>% 
+  select(Forma_arbol_descripcion,Calidad_tronco_descripcion,
+         Produccion_frutos_descripcion,
+         Calidad_frutos_descripcion,
+         Calidad_follaje_descripcion,
+         Bifurcacion_descripcion)
 
-str(data_pca)
+variables <- c("Forma_arbol_descripcion", "Calidad_tronco_descripcion", "Produccion_frutos_descripcion", 
+               "Calidad_frutos_descripcion", "Calidad_follaje_descripcion", "Bifurcacion_descripcion")
 
-res.pca <- PCA(X = data_pca, scale.unit = T, graph = F)
+# Crear lista vacía para guardar resultados
+resultados <- list()
 
-summary(res.pca)
+for (var in variables) {
+  # Tabla de frecuencia
+  freq_table <- as.data.frame(table(datos[[var]]))
+  colnames(freq_table) <- c("State", "Frequency")
+  
+  # Calcular proporción
+  freq_table$Proportion <- round((freq_table$Frequency / sum(freq_table$Frequency)) * 100, 2)
+  
+  # Índice de Shannon
+  H <- diversity(freq_table$Frequency, index = "shannon")
+  
+  # Añadir variable y valor del índice a la tabla
+  freq_table <- freq_table %>%
+    mutate(Qualitative_trait = var,
+           Shannon_Weaver_index = round(H, 2)) %>%
+    select(Qualitative_trait, Shannon_Weaver_index, everything())
+  
+  # Guardar
+  resultados[[var]] <- freq_table
+}
 
-fviz_screeplot(res.pca)
+# Unir todo en una sola tabla
+tabla_shannon <- bind_rows(resultados)
 
-fviz_pca_var(res.pca,
-             col.var = "contrib", # Color by contributions to the PC
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             repel = TRUE     # Avoid text overlapping
-)
+tabla_shannon %>% kable(align = 'c')
 
-grupo <- as.factor(datos$Estación)
+tabla_shannon %>%
+  write_sheet(ss = gs, sheet = "shanon_index")
 
-p1 <- fviz_pca_biplot(res.pca,
-                axes = c(1,2),
-                col.ind = grupo,
-                legend.title = "Estaciones",
-                geom.ind = "point",
-                repel = FALSE
-) +
-theme(
-    legend.position = "bottom",        # Leyenda abajo
-    legend.justification = "center",   # Centra la leyenda
-    legend.direction = "horizontal"    # Distribuye los elementos horizontalmente
-  ) +
-  guides(color = guide_legend(nrow = 1))
-
-# mv <- data_variables %>% 
-#   mutate(across(c(Forma_arbol:Parasitos_XX), as.numeric)) %>% 
-#   group_by(Estación) %>% 
-#   select(-(`fito_IIhEd _k`:Parasitos_XX)) %>%
-#       select(-c(Altura_ram, Bifurcacion, Cuenca)) %>% 
-#   select(-(Individuo:Localidad)) %>% 
-#   summarise(across(where(is.numeric), ~ mean(., na.rm = T)))
-#   
-# pca <- mv %>% 
-#   PCA(scale.unit = T, quali.sup = 1, graph = F) 
-# 
-# # summary
-# 
-# summary(pca, nbelements = Inf, nb.dec = 2)
-# 
-# f4a <- plot.PCA(x = pca, choix = "var"
-#                 , cex=0.8
-#                 , label = "var"
-#                 )
-# 
-# f4b <- plot.PCA(x = pca, choix = "ind"
-#                 , habillage = 1
-#                 , invisible = c("ind")
-#                 , cex=0.8
-#                 ) 
 ```
 
 ## Cluster Analysis
 
-Principal Component Analysis (PCA). Results of the contributions and correlation of the variables in the Principal Component Analysis (PCA).
-
 ```{r}
-data_clust <- data_variables %>% 
-      mutate(across(c(Forma_arbol:Parasitos_XX), as.numeric)) %>% 
-      select(-(Individuo:Cuenca)) %>% 
-      select(-(`fito_IIhEd _k`:Parasitos_XX)) 
-      # textshape::column_to_rownames(., loc = 1)
+mv <- data_variables %>%
+  mutate(across(Forma_arbol:Parasitos_XX, as.numeric)) %>%
+  group_by(Localidad) %>%
+  select(
+    -(`fito_IIhEd _k`:Parasitos_XX),
+    -c(Altura_ram, Bifurcacion, Cuenca, Estación),
+    -(Individuo:Localidad),
+    -(Carbonatos:pH)
+  ) %>%
+  summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE)))
 
-data_clust <- scale(data_clust)
+mv1 <- mv %>% 
+  textshape::column_to_rownames(., loc = 1)
+
+data_clust <- scale(mv1)
 
 m_distancia <- get_dist(data_clust, method = "euclidean")
 
-fviz_nbclust(data_clust, pam, method = "wss")
 fviz_nbclust(data_clust, pam, method = "silhouette")
-fviz_nbclust(data_clust, pam, method = "gap_stat")
 
-pm <- pam(data_clust,10)
+pm <- pam(data_clust,4)
 
-pm
+res <- hcut(m_distancia, k = 4, stand = TRUE, method = "median")
 
-fviz_cluster(pm, data = data_clust, 
-             ellipse.type = "norm",
-              ggtheme = theme_minimal()) 
-
-res <- hcut(m_distancia, k = 10, stand = TRUE, method = "median")
-
-fviz_dend(res, rect = TRUE, cex = 0.59, horiz = TRUE)
-
+fviz_dend(res, rect = TRUE, cex = 0.59)
 ```
 
 # Traits distribution by population
 
 ```{r}
-
-data_dist <- data_variables %>% 
-      select(-(Individuo:Estación)) %>% 
-      select(-(`fito_IIhEd _k`:Parasitos_XX)) %>% 
-      select(-(Carbonatos:pH))
+data_dist <- data_variables %>%
+  select(
+    -c(Individuo:Distrito, Estación:Cuenca,
+       `fito_IIhEd _k`:Parasitos_XX,
+       Carbonatos:pH)
+  )
 
 str(data_dist)
 
@@ -298,10 +274,10 @@ dist_num <- data_dist %>%
     names_to = "Variable",
     values_to = "Valor"
   ) %>%
-  ggplot(aes(x = Cuenca, y = Valor, fill = Cuenca)) +
+  ggplot(aes(x = Localidad, y = Valor, fill = Localidad)) +
   geom_violin(trim = FALSE, alpha = 0.5) +
   geom_boxplot(width = 0.1, outlier.shape = NA) +
-  facet_wrap(~ Variable, scales = "free_y", ncol = 2, strip.position = "left") +
+  facet_wrap(~ Variable, scales = "free_y", ncol = 1, strip.position = "left") +
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
@@ -310,28 +286,6 @@ dist_num <- data_dist %>%
     legend.position = "none"
   ) +
   labs(x = "", y = "")
-
-dist_cat <- data_dist %>%
-  pivot_longer(
-    cols = c(Forma_arbol, Calidad_tronco, Produccion_frutos, 
-             Calidad_frutos, Calidad_follaje, Bifurcacion),
-    names_to = "Variable",
-    values_to = "Categoria"
-  ) %>%
-  mutate(Categoria = as.factor(Categoria)) %>%
-  ggplot(aes(x = Cuenca, fill = Categoria)) +
-  geom_bar(position = "fill") +  
-  facet_wrap(~ Variable, scales = "free_y", ncol = 3, strip.position = "left") +
-  theme_minimal() +
-  theme(
-    strip.text = element_text(face = "bold"),
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    legend.position = "right"
-  ) +
-  labs(x = "Cuenca", y = "Proporción", fill = "Categoría") +
-   guides(fill = "none")
-
-str(data_dist)
 ```
 
 # Broad-sense heritability
@@ -427,7 +381,80 @@ h2blues <- 1:length(rslt) %>% map(\(x) {
 h2blues %>% kable(caption = "BLUEs")
 ```
 
-### Figure 4
+# Multivariate
+
+## Principal Component Analysis (PCA)
+
+Principal Component Analysis (PCA). Results of the contributions and correlation of the variables in the Principal Component Analysis (PCA).
+
+```{r}
+mv <- data_variables %>%
+  mutate(across(c(Forma_arbol:Parasitos_XX), as.numeric)) %>%
+  group_by(Localidad) %>%
+  select(-(`fito_IIhEd _k`:Parasitos_XX)) %>%
+      select(-c(Altura_ram, Bifurcacion, Cuenca, Estación)) %>%
+  select(-(Individuo:Localidad)) %>%
+  select(-(Carbonatos:pH)) %>% 
+  summarise(across(where(is.numeric), ~ mean(., na.rm = T)))
+
+pca <- mv %>%
+  PCA(scale.unit = T, quali.sup = 1, graph = F)
+
+# summary
+
+summary(pca, nbelements = Inf, nb.dec = 2)
+
+f4a <- plot.PCA(x = pca, choix = "var"
+                , cex=0.8
+                , label = "var"
+                )
+
+f4b <- plot.PCA(x = pca, choix = "ind"
+                , habillage = 1
+                , invisible = c("ind")
+                , cex=0.8
+                , ylim = c(-3,3)
+                )
+
+# data_pca <- data_variables %>% 
+#       mutate(across(c(Forma_arbol:Parasitos_XX), as.numeric)) %>% 
+#       select(-(Individuo:Cuenca)) %>% 
+#       select(-(`fito_IIhEd _k`:Parasitos_XX)) %>%
+#       select(-c(Altura_ram, Bifurcacion))
+#       # textshape::column_to_rownames(., loc = 1)
+# 
+# str(data_pca)
+# 
+# res.pca <- PCA(mv = data_pca, scale.unit = T, graph = F)
+# 
+# summary(res.pca)
+# 
+# fviz_screeplot(res.pca)
+# 
+# fviz_pca_var(res.pca,
+#              col.var = "contrib", # Color by contributions to the PC
+#              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+#              repel = TRUE     # Avoid text overlapping
+# )
+# 
+# grupo <- as.factor(datos$Localidad)
+# 
+# p1 <- fviz_pca_biplot(pca,
+#                 axes = c(1,2),
+#                 # col.ind = grupo,
+#                 legend.title = "Estaciones",
+#                 geom.ind = "point",
+#                 repel = FALSE
+# ) +
+# theme(
+#     legend.position = "bottom",        # Leyenda abajo
+#     legend.justification = "center",   # Centra la leyenda
+#     legend.direction = "horizontal"    # Distribuye los elementos horizontalmente
+#   ) +
+#   guides(color = guide_legend(nrow = 1))
+```
+
+### Figure 1
 
 Principal Component Analysis (PCA). Results of the contributions and correlation of the variables in the Principal Component Analysis (PCA).
 
@@ -446,59 +473,50 @@ pt1 <- fviz_eig(pca,
     y = "Variance (%)") +
   theme_minimal()
 
-pt2 <- fviz_contrib(res.pca,
+pt2 <- fviz_contrib(pca,
                      choice = "var", 
                      axes = 1, 
-                     top = 17,
+                     top = 10,
                      fill="white",
                      color ="darkblue",
                      sort.val = "desc") +
-  ylim(0, 12) + 
+  ylim(0, 20) + 
   labs(title = "Dim 1 - variables contribution") 
 
-pt3 <- fviz_contrib(res.pca,
+pt3 <- fviz_contrib(pca,
                      choice = "var", 
                      axes = 2, 
-                     top = 17,
+                     top = 10,
                      fill="white",
                      color ="darkblue",
                      sort.val = "desc") +
-  ylim(0, 12) + 
+  ylim(0, 60) + 
   labs(title = "Dim 2 - variables contribution") 
 
-png("corrplot_output.png", width = 800, height = 800, res = 150)  
-corrplot(var$cor, 
-         method = "number",
-         tl.col = "black", 
-         tl.srt = 45)
-dev.off()
+pt4 <- function() {
 
-img_corrplot <- ggdraw() + draw_image("corrplot_output.png")
+  corrplot(var$cor,
+         method="number",
+         tl.col="black",
+         tl.srt=45,)
 
-pt4 <- img_corrplot
-
+}
 # Construcción del grid
-fila1 <- plot_grid(f4a, f4b, ncol = 2, labels = "auto", rel_widths = c(1, 1.5))
+
+fila1 <- plot_grid(f4a, f4b, ncol = 2, labels = "auto", rel_widths = c(1, 1.4))
 
 columna_c <- plot_grid(pt1, pt2, pt3, ncol = 1, labels = "c")
 
-fila2 <- plot_grid(columna_c, pt4, ncol = 2, labels = c("", "d"), rel_widths = c(1, 1))
+fila2 <- plot_grid(columna_c, pt4, ncol = 2, labels = c("", "d"), rel_widths = c(1, 1.3))
 
 grid_final <- plot_grid(fila1, fila2, ncol = 1, rel_heights = c(1, 1.2))
 
 grid_final
 
-
-ggsave2(plot = grid_final, "submission/Figure_4.jpg", height = 30, width = 28, units = "cm")
+ggsave2(plot = grid_final, "submission/Figure_1.jpg", height = 30, width = 28, units = "cm")
 
 ggsave2(plot = grid_final, "submission/Figure_4.eps", height = 30, width = 28, units = "cm")
 
 knitr::include_graphics("submission/Figure_4.jpg")
 ```
-
-
-
-
-
-
 
