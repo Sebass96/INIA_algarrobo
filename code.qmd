@@ -50,43 +50,43 @@ gs <- url %>%
 datos <- gs %>%
   range_read("total") %>%
   mutate(
-    Forma_arbol_descripcion = case_when(
-      Forma_arbol == 3 ~ "un solo tallo",
-      Forma_arbol == 2 ~ "intermedios",
-      Forma_arbol == 1 ~ "múltiples tallos",
+    'Tree form description' = case_when(
+      Forma_arbol == 3 ~ "Single-stemmed trees",
+      Forma_arbol == 2 ~ "Intermediate trees",
+      Forma_arbol == 1 ~ "Multi-stemmed trees",
       TRUE ~ NA_character_
     ),
-    Calidad_tronco_descripcion = case_when(
-      Calidad_tronco == 3 ~ "sin defectos",
-      Calidad_tronco == 2 ~ "regular defectos",
-      Calidad_tronco == 1 ~ "defectuoso",
+    'Trunk quality description' = case_when(
+      Calidad_tronco == 3 ~ "High-quality tree, free of defects or with minimal defects",
+      Calidad_tronco == 2 ~ "Moderate-quality tree with defects",
+      Calidad_tronco == 1 ~ "Poor-quality tree with significant defects",
       TRUE ~ NA_character_
     ),
-    Produccion_frutos_descripcion = case_when(
-      Produccion_frutos == 4 ~ "100% de las ramas",
-      Produccion_frutos == 3 ~ "75% de las ramas",
-      Produccion_frutos == 2 ~ "50% de las ramas",
-      Produccion_frutos == 1 ~ "25% de las ramas",
-      Produccion_frutos == 0 ~ "Sin frutos",
+    'Fruit production description' = case_when(
+      Produccion_frutos == 4 ~ "Trees bearing fruit on 100% of branches",
+      Produccion_frutos == 3 ~ "Trees bearing fruit on up to 75% of branches",
+      Produccion_frutos == 2 ~ "Trees bearing fruit on up to 50% of branches",
+      Produccion_frutos == 1 ~ "Trees bearing fruit on up to 25% of branches",
+      Produccion_frutos == 0 ~ "Trees without fruit",
       TRUE ~ NA_character_
     ),
-     Calidad_frutos_descripcion = case_when(
-      Calidad_frutos == 3 ~ "muy dulce",
-      Calidad_frutos == 2 ~ "dulce",
-      Calidad_frutos == 1 ~ "muy amargo",
-      Calidad_frutos == 0 ~ "amargo",
+     'Fruit quality description' = case_when(
+      Calidad_frutos == 3 ~ "Trees with very sweet fruit",
+      Calidad_frutos == 2 ~ "Trees with sweet fruit",
+      Calidad_frutos == 1 ~ "Trees with very bitter fruit",
+      Calidad_frutos == 0 ~ "Trees with bitter fruit",
       TRUE ~ NA_character_
     ),
-    Calidad_follaje_descripcion = case_when(
-      Calidad_follaje == 3 ~ "total de las ramas",
-      Calidad_follaje == 2 ~ "2/3 de las ramas",
-      Calidad_follaje == 1 ~ "1/3 de las ramas",
+    'Foliage quality description' = case_when(
+      Calidad_follaje == 3 ~ "Trees with foliage on all branches",
+      Calidad_follaje == 2 ~ "Trees with foliage on up to two-thirds of branches",
+      Calidad_follaje == 1 ~ "Trees with foliage on up to one-third of branches",
       TRUE ~ NA_character_
     ),
-   Bifurcacion_descripcion = case_when(
-      Bifurcacion == 3 ~ "no presenta bifurcación",
-      Bifurcacion == 2 ~ "bifurcado a la altura del DAP",
-      Bifurcacion == 1 ~ "bifurcado por debajo del DAP",
+   'Forking description' = case_when(
+      Bifurcacion == 3 ~ "No evidence of bifurcation",
+      Bifurcacion == 2 ~ "Forked at breast height (DBH)",
+      Bifurcacion == 1 ~ "Presence of bifurcation below breast height (DBH)",
       TRUE ~ NA_character_
     )
   ) %>%
@@ -107,7 +107,29 @@ datos <- gs %>%
     `fito_IIhEd _k`:Parasitos_XX, Carbonatos:Suelo
   ) %>%
   mutate(across(c(1:7), as.factor)) %>% 
-  mutate(across(c(Forma_arbol:Parasitos_XX, Suelo), as.factor))
+  mutate(across(c(Forma_arbol:Parasitos_XX, Suelo), as.factor)) %>% 
+  rename(
+         , Individual = Individuo
+         , Departament = Departamento
+         , Province = Provincia
+         , District = Distrito
+         , Locality = Localidad
+         , Station = Estación
+         , Basin = Cuenca
+         , DBH = DAP
+         , 'Crown diameter' = Diam_copa
+         , 'Branch height' = Altura_ram
+         , 'Total height' = Altura_total
+         , 'Number of branches' = Num_ramas_XX
+         , 'Tree form' = Forma_arbol
+         , 'Trunk quality' = Calidad_tronco
+         , 'Fruit production' = Produccion_frutos
+         , 'Fruit quality' = Calidad_frutos
+         , 'Foliage quality' = Calidad_follaje
+         , 'Forking' = Bifurcacion
+         )
+
+names(datos)
 
 str(datos)
 
