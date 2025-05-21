@@ -48,38 +48,44 @@ gs <- url %>%
 datos <- gs %>%
   range_read("total") %>%
   mutate(
-    Forma_arbol_descripcion = recode(Forma_arbol,
-      `3` = "Single-stemmed trees",
-      `2` = "Intermediate trees",
-      `1` = "Multi-stemmed trees"
+    Forma_arbol_descripcion = case_when(
+      Forma_arbol == 3 ~ "Single-stemmed trees",
+      Forma_arbol == 2 ~ "Intermediate trees",
+      Forma_arbol == 1 ~ "Multi-stemmed trees",
+      TRUE ~ NA_character_
     ),
-    Calidad_tronco_descripcion = recode(Calidad_tronco,
-      `3` = "High-quality tree, free of defects or with minimal defects",
-      `2` = "Moderate-quality tree with defects",
-      `1` = "Poor-quality tree with significant defects"
+    Calidad_tronco_descripcion = case_when(
+      Calidad_tronco == 3 ~ "High-quality tree, free of defects or with minimal defects",
+      Calidad_tronco == 2 ~ "Moderate-quality tree with defects",
+      Calidad_tronco == 1 ~ "Poor-quality tree with significant defects",
+      TRUE ~ NA_character_
     ),
-    Produccion_frutos_descripcion = recode(Produccion_frutos,
-      `4` = "Trees bearing fruit on 100% of branches",
-      `3` = "Trees bearing fruit on up to 75% of branches",
-      `2` = "Trees bearing fruit on up to 50% of branches",
-      `1` = "Trees bearing fruit on up to 25% of branches",
-      `0` = "Trees without fruit"
+    Produccion_frutos_descripcion = case_when(
+      Produccion_frutos == 4 ~ "Trees bearing fruit on 100% of branches",
+      Produccion_frutos == 3 ~ "Trees bearing fruit on up to 75% of branches",
+      Produccion_frutos == 2 ~ "Trees bearing fruit on up to 50% of branches",
+      Produccion_frutos == 1 ~ "Trees bearing fruit on up to 25% of branches",
+      Produccion_frutos == 0 ~ "Trees without fruit",
+      TRUE ~ NA_character_
     ),
-    Calidad_frutos_descripcion = recode(Calidad_frutos,
-      `3` = "Trees with very sweet fruit",
-      `2` = "Trees with sweet fruit",
-      `1` = "Trees with very bitter fruit",
-      `0` = "Trees with bitter fruit"
+    Calidad_frutos_descripcion = case_when(
+      Calidad_frutos == 3 ~ "Trees with very sweet fruit",
+      Calidad_frutos == 2 ~ "Trees with sweet fruit",
+      Calidad_frutos == 1 ~ "Trees with very bitter fruit",
+      Calidad_frutos == 0 ~ "Trees with bitter fruit",
+      TRUE ~ NA_character_
     ),
-    Calidad_follaje_descripcion = recode(Calidad_follaje,
-      `3` = "Trees with foliage on all branches",
-      `2` = "Trees with foliage on up to two-thirds of branches",
-      `1` = "Trees with foliage on up to one-third of branches"
+    Calidad_follaje_descripcion = case_when(
+      Calidad_follaje == 3 ~ "Trees with foliage on all branches",
+      Calidad_follaje == 2 ~ "Trees with foliage on up to two-thirds of branches",
+      Calidad_follaje == 1 ~ "Trees with foliage on up to one-third of branches",
+      TRUE ~ NA_character_
     ),
-    Bifurcacion_descripcion = recode(Bifurcacion,
-      `3` = "No evidence of bifurcation",
-      `2` = "Forked at breast height (DBH)",
-      `1` = "Presence of bifurcation below breast height (DBH)"
+    Bifurcacion_descripcion = case_when(
+      Bifurcacion == 3 ~ "No evidence of bifurcation",
+      Bifurcacion == 2 ~ "Forked at breast height (DBH)",
+      Bifurcacion == 1 ~ "Presence of bifurcation below breast height (DBH)",
+      TRUE ~ NA_character_
     )
   ) %>%
   select(
@@ -437,7 +443,7 @@ p1 <- data_long %>%
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "none"
   ) +
-  labs(x = "", y = "DBH") +
+  labs(x = "", y = "DBH (cm)") +
   scale_y_continuous(limits = c(0, 160))
 
   # geom_violin(trim = FALSE, alpha = 0.5) +
@@ -465,7 +471,7 @@ p2 <- data_long %>%
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "none"
   ) +
-  labs(x = "", y = "Crown diameter")
+  labs(x = "", y = "Crown diameter (m)")
 
 p3 <- data_long %>%
   filter(Variable == "Branch height") %>%
@@ -483,7 +489,7 @@ p3 <- data_long %>%
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "none"
   ) +
-  labs(x = "", y = "Branch height")
+  labs(x = "", y = "Branch height (m)")
 
 p4 <- data_long %>%
   filter(Variable == "Total height") %>%
@@ -501,7 +507,7 @@ p4 <- data_long %>%
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "none"
   ) +
-  labs(x = "", y = "Total height") +
+  labs(x = "", y = "Total height (m)") +
   scale_y_continuous(limits = c(0, 30))
 ```
 
@@ -656,7 +662,7 @@ mv <- data_variables %>%
 str(mv)
 
 pca <- mv %>%
-  PCA(scale.unit = T, quali.sup = 1, graph = F)
+  PCA(scale.unit = T, graph = F)
 
 # summary
 
@@ -665,7 +671,8 @@ summary(pca, nbelements = Inf, nb.dec = 2)
 f5a <- fviz_pca_var(pca,
              # col.var = "contrib", # Color by contributions to the PC
              # gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             repel = TRUE     # Avoid text overlapping
+             title = "PCA graph of variables",
+             repel = TRUE,     # Avoid text overlapping
 )
 
 grupo <- as.factor(datos$Locality)
@@ -675,9 +682,9 @@ f5b <- fviz_pca_ind(pca,
                 col.ind = grupo,
                 legend.title = "Stations",
                 geom.ind = "point",
+                title = "PCA graph of individuals",
                 repel = FALSE
 )
-
 
 # data_pca <- data_variables %>% 
 #       mutate(across(c(Forma_arbol:Parasitos_XX), as.numeric)) %>% 
@@ -725,17 +732,17 @@ Principal Component Analysis (PCA). Results of the contributions and correlation
 fig <- list(f5a, f5b) %>% 
   plot_grid(plotlist = ., ncol = 2, nrow = 1
             , labels = "auto"
-            , rel_widths = c(1, 1.5)
+            , rel_widths = c(1.1, 1.5)
             )
 fig %>% 
   ggsave2(plot = ., "submission/Figure_4.jpg", units = "cm"
-         , width = 25
-         , height = 10
+         , width = 28
+         , height = 12
          )
 fig %>% 
   ggsave2(plot = ., "submission/Figure_4.eps", units = "cm"
-         , width = 25
-         , height = 10
+         , width = 28
+         , height = 12
          )
 
 knitr::include_graphics("submission/Figure_4.jpg")
