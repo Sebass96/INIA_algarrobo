@@ -71,8 +71,8 @@ datos <- gs %>%
     Calidad_frutos_descripcion = case_when(
       Calidad_frutos == 3 ~ "Trees with very sweet fruit",
       Calidad_frutos == 2 ~ "Trees with sweet fruit",
-      Calidad_frutos == 1 ~ "Trees with very bitter fruit",
-      Calidad_frutos == 0 ~ "Trees with bitter fruit",
+      Calidad_frutos == 1 ~ "Trees with bitter fruit",
+      Calidad_frutos == 0 ~ "Trees with very bitter fruit",
       TRUE ~ NA_character_
     ),
     Calidad_follaje_descripcion = case_when(
@@ -394,7 +394,7 @@ res <- hcut(m_distancia, k = 4, stand = TRUE, method = "median")
 fig <- fviz_dend(res, rect = TRUE, cex = 0.59,
                  main = NULL,
                  ylab = "Similarity",
-                 type = "circular",
+                 # type = "circular",
                  repel = T,
                  ggtheme = theme_void())+
     theme(axis.text = element_blank(),  # quita los números del eje
