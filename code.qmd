@@ -214,18 +214,37 @@ Principal Component Analysis (PCA). Results of the contributions and correlation
 ```{r}
 mv <- data_variables %>%
   group_by(Locality) %>%
-  select(Carbonatos:pH) %>%
-  summarise(across(where(is.numeric), mean, na.rm = TRUE)) %>% 
+  summarise(across(Carbonatos:pH, ~ mean(.x, na.rm = TRUE))) %>% 
   rename(
     Carbonates = Carbonatos,
     EC = CE,
     Phosphorus = Fosforo,
     `Organic matter` = Mat_Org,
     Nitrogen = Nitrogeno,
-    Potassium = Potasio,
+    Potassium = Potasio
   )
 
-str(mv)
+# mv_mat <- mv %>%
+#   select(-Locality) %>%
+#   as.data.frame()  # convierte a data.frame base
+# 
+# rownames(mv_mat) <- mv$Locality
+# 
+# pca <- PCA(mv_mat, scale.unit = TRUE, graph = FALSE)
+# 
+# grupo <- as.factor(rownames(mv_mat))  # cada localidad como grupo
+# 
+# fviz_pca_biplot(pca,
+#                 axes = c(1, 2),
+#                 geom.ind = c("point","text"),              # mostrar nombres de las localidades
+#                 # col.ind = grupo,                # colores por localidad
+#                 col.var = "contrib",            # variables según contribución
+#                 gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),  # gradiente para contribución
+#                 legend.title = list(fill = "Contribución", color = "Contribución"),
+#                 repel = TRUE
+# ) +
+#   # theme(legend.position = "none") +
+#    ylim(c(-2,4))
 
 pca <- mv %>%
   PCA(scale.unit = T, quali.sup = 1, graph = F)
