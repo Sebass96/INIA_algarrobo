@@ -437,6 +437,26 @@ knitr::include_graphics("submission/Figure_1.jpg")
 data_dist <- data_variables %>%
   select(-Individual:-District, -Station:-Basin, -`fito_IIhEd _k`:-Parasitos_XX, -Carbonatos:-pH)
 
+trait <- "DBH"
+
+lmm <- paste({{trait}}, "~ 1 + (1|repetition) + Locality") %>% as.formula()
+
+rmout <- fb %>% 
+  remove_outliers(formula = lmm
+                  , drop_na = T, plot_diag = T)
+
+plot_diagnostic(rmout$data$clean, formula = lmm) %>% 
+  plot_grid(plotlist = ., ncol = 2)
+
+rmout$outliers
+
+model <- rmout$data$clean %>% 
+  lmer(formula = lmm, .)
+
+Anova(model, type = 3, test.statistic = "F")
+
+
+
 # Pivotear datos
 
 data_long <- data_dist %>%
