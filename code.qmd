@@ -19,6 +19,7 @@ execute:
 ```{r}
 #| label:  setup
 library(corrplot)
+library(heatmaply)
 library(multcomp)
 library(factoextra)
 library(corrplot)
@@ -397,7 +398,7 @@ tabla_shannon %>% kable(align = "c")
 #   write_sheet(ss = gs, sheet = "shanon_index")
 ```
 
-## Cluster Analysis
+# Cluster Analysis
 
 ```{r}
 mv <- data_variables %>%
@@ -417,6 +418,25 @@ mv1 <- mv %>%
   textshape::column_to_rownames(., loc = 1)
 
 data_clust <- scale(mv1)
+
+heatmaply(
+  data_clust,
+  hclust_method = "median",
+  k_row = 4,  # número de clusters para filas (localidades)
+  # k_col = 2,  # número de clusters para columnas (variables),
+  colors = colorRampPalette(c("red", "yellow", "green"))(256),
+  xlab = "Response variables",
+  ylab = "Localities",
+  fontsize_row = 10,
+  fontsize_col = 10,
+  margins = c(60, 100),
+  labRow = rownames(data_clust),
+  labCol = colnames(data_clust),
+  dendrogram = "row",
+  key.title = "Color Key",
+)
+
+
 
 m_distancia <- get_dist(data_clust, method = "euclidean")
 
@@ -461,28 +481,6 @@ knitr::include_graphics("submission/Figure_1.jpg")
 data_dist <- data_variables %>%
   select(-Individual:-District, -Station:-Basin, -`fito_IIhEd _k`:-Parasitos_XX, -Carbonatos:-pH)
 
-trait <- "DBH"
-
-lmm <- paste({{ trait }}, "~ 1 + (1|repetition) + Locality") %>% as.formula()
-
-rmout <- fb %>%
-  remove_outliers(
-    formula = lmm,
-    drop_na = T, plot_diag = T
-  )
-
-plot_diagnostic(rmout$data$clean, formula = lmm) %>%
-  plot_grid(plotlist = ., ncol = 2)
-
-rmout$outliers
-
-model <- rmout$data$clean %>%
-  lmer(formula = lmm, .)
-
-Anova(model, type = 3, test.statistic = "F")
-
-
-
 # Pivotear datos
 
 data_long <- data_dist %>%
@@ -492,6 +490,54 @@ data_long <- data_dist %>%
     values_to = "Valor"
   )
 
+names(data_dist)
+```
+
+## "DBH"
+
+```{r}
+trait <- "DBH"
+
+lmm <- paste({{ trait }}, "~ Locality") %>% as.formula()
+
+plot_diagnostic(data_dist, formula = lmm) %>%
+  plot_grid(plotlist = ., ncol = 2)
+
+model <- data_dist %>%
+  lm(formula = lmm, .)
+
+# # Residuales Estandarizados
+#
+# ri <- rstandard(model)
+# sort(ri)
+#
+# # Normalidad
+#
+# shapiro.test(ri)
+#
+# ad.test(ri)
+#
+# Anova(model, type = 3, test.statistic = "F")
+#
+# kruskal.test(lmm, data = data_dist)
+
+mc <- emmeans(model, ~Locality) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  rename(sig = ".group")
+
+mc %>% kable()
+
+# Calcular el valor máximo (upper whisker) por grupo
+
+positions <- data_dist %>%
+  group_by(Locality) %>%
+  summarise(y_pos = max(DBH, na.rm = TRUE) + 5, .groups = "drop")
+
+# Combinar con las letras del objeto mc
+
+mc_pos <- left_join(mc, positions, by = "Locality")
+
 p1 <- data_long %>%
   filter(Variable == "DBH") %>%
   ggplot(aes(x = Locality, y = Valor, fill = Locality)) +
@@ -500,6 +546,13 @@ p1 <- data_long %>%
   geom_jitter(
     position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
     shape = 21, size = 1.8, alpha = 0.6, color = "black"
+  ) +
+  geom_text(
+    data = mc_pos,
+    aes(x = factor(Locality), y = y_pos, label = sig),
+    position = position_dodge(width = 0.8),
+    size = 4,
+    inherit.aes = FALSE
   ) +
   theme_minimal() +
   theme(
@@ -522,6 +575,39 @@ p1 <- data_long %>%
 # ) +
 # labs(x = "", y = "DBH")
 
+p1
+```
+
+## Crown diameter
+
+```{r}
+trait <- "`Crown diameter`"
+
+lmm <- paste({{ trait }}, "~ Locality") %>% as.formula()
+
+plot_diagnostic(data_dist, formula = lmm) %>%
+  plot_grid(plotlist = ., ncol = 2)
+
+model <- data_dist %>%
+  lm(formula = lmm, .)
+
+mc <- emmeans(model, ~Locality) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  rename(sig = ".group")
+
+mc %>% kable()
+
+# Calcular el valor máximo (upper whisker) por grupo
+
+positions <- data_dist %>%
+  group_by(Locality) %>%
+  summarise(y_pos = max(`Crown diameter`, na.rm = TRUE) + 2, .groups = "drop")
+
+# Combinar con las letras del objeto mc
+
+mc_pos <- left_join(mc, positions, by = "Locality")
+
 p2 <- data_long %>%
   filter(Variable == "Crown diameter") %>%
   ggplot(aes(x = Locality, y = Valor, fill = Locality)) +
@@ -530,6 +616,13 @@ p2 <- data_long %>%
   geom_jitter(
     position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
     shape = 21, size = 1.8, alpha = 0.6, color = "black"
+  ) +
+  geom_text(
+    data = mc_pos,
+    aes(x = factor(Locality), y = y_pos, label = sig),
+    position = position_dodge(width = 0.8),
+    size = 4,
+    inherit.aes = FALSE
   ) +
   theme_minimal() +
   theme(
@@ -542,6 +635,39 @@ p2 <- data_long %>%
   ) +
   labs(x = "", y = "Crown diameter (m)")
 
+p2
+```
+
+## Branch height
+
+```{r}
+trait <- "`Branch height`"
+
+lmm <- paste({{ trait }}, "~ Locality") %>% as.formula()
+
+plot_diagnostic(data_dist, formula = lmm) %>%
+  plot_grid(plotlist = ., ncol = 2)
+
+model <- data_dist %>%
+  lm(formula = lmm, .)
+
+mc <- emmeans(model, ~Locality) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  rename(sig = ".group")
+
+mc %>% kable()
+
+# Calcular el valor máximo (upper whisker) por grupo
+
+positions <- data_dist %>%
+  group_by(Locality) %>%
+  summarise(y_pos = max(`Branch height`, na.rm = TRUE) + 0.5, .groups = "drop")
+
+# Combinar con las letras del objeto mc
+
+mc_pos <- left_join(mc, positions, by = "Locality")
+
 p3 <- data_long %>%
   filter(Variable == "Branch height") %>%
   ggplot(aes(x = Locality, y = Valor, fill = Locality)) +
@@ -550,6 +676,13 @@ p3 <- data_long %>%
   geom_jitter(
     position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
     shape = 21, size = 1.8, alpha = 0.6, color = "black"
+  ) +
+  geom_text(
+    data = mc_pos,
+    aes(x = factor(Locality), y = y_pos, label = sig),
+    position = position_dodge(width = 0.8),
+    size = 4,
+    inherit.aes = FALSE
   ) +
   theme_minimal() +
   theme(
@@ -562,6 +695,39 @@ p3 <- data_long %>%
   ) +
   labs(x = "", y = "Branch height (m)")
 
+p3
+```
+
+## Total height
+
+```{r}
+trait <- "`Total height`"
+
+lmm <- paste({{ trait }}, "~ Locality") %>% as.formula()
+
+plot_diagnostic(data_dist, formula = lmm) %>%
+  plot_grid(plotlist = ., ncol = 2)
+
+model <- data_dist %>%
+  lm(formula = lmm, .)
+
+mc <- emmeans(model, ~Locality) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  rename(sig = ".group")
+
+mc %>% kable()
+
+# Calcular el valor máximo (upper whisker) por grupo
+
+positions <- data_dist %>%
+  group_by(Locality) %>%
+  summarise(y_pos = max(`Total height`, na.rm = TRUE) + 1, .groups = "drop")
+
+# Combinar con las letras del objeto mc
+
+mc_pos <- left_join(mc, positions, by = "Locality")
+
 p4 <- data_long %>%
   filter(Variable == "Total height") %>%
   ggplot(aes(x = Locality, y = Valor, fill = Locality)) +
@@ -570,6 +736,13 @@ p4 <- data_long %>%
   geom_jitter(
     position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
     shape = 21, size = 1.8, alpha = 0.6, color = "black"
+  ) +
+  geom_text(
+    data = mc_pos,
+    aes(x = factor(Locality), y = y_pos, label = sig),
+    position = position_dodge(width = 0.8),
+    size = 4,
+    inherit.aes = FALSE
   ) +
   theme_minimal() +
   theme(
@@ -582,6 +755,8 @@ p4 <- data_long %>%
   ) +
   labs(x = "", y = "Total height (m)") +
   scale_y_continuous(limits = c(0, 30))
+
+p4
 ```
 
 ## Figure 2
