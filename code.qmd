@@ -28,7 +28,7 @@ library(textshape)
 library(googlesheets4)
 library(cluster)
 library(vegan)
-source('https://inkaverse.com/setup.r')
+source("https://inkaverse.com/setup.r")
 
 set.seed(2025)
 cat("Project: ", getwd(), "\n")
@@ -42,7 +42,7 @@ The data were imported from the field book of the biological, dasometric, and ph
 ```{r}
 url <- "https://docs.google.com/spreadsheets/d/19zJF9ti9AQhOCTenP6UqL0jA8Anl1s0r0ld-xzrR-PY/edit?gid=1347114226#gid=1347114226"
 
-gs <- url %>% 
+gs <- url %>%
   as_sheets_id()
 
 datos <- gs %>%
@@ -155,17 +155,19 @@ str(data_variables)
 data_coordenadas <- gs %>%
   range_read("total") %>%
   select(
-   Individuo, Departamento = "Depart", Provincia,
-   Distrito, Localidad, Estación, Cuenca, UTM_X,UTM_Y, UTM_E_suelo,
-   UTM_N_suelo) 
+    Individuo,
+    Departamento = "Depart", Provincia,
+    Distrito, Localidad, Estación, Cuenca, UTM_X, UTM_Y, UTM_E_suelo,
+    UTM_N_suelo
+  )
 
 str(data_coordenadas)
 ```
 
 ```{r}
-datos %>% kable(caption = "Evaluation of mesquite trees", align = 'c')
+datos %>% kable(caption = "Evaluation of mesquite trees", align = "c")
 
-data_coordenadas %>% kable(caption = "Location of mesquite trees", align = 'c')
+data_coordenadas %>% kable(caption = "Location of mesquite trees", align = "c")
 ```
 
 # Data summary
@@ -173,35 +175,35 @@ data_coordenadas %>% kable(caption = "Location of mesquite trees", align = 'c')
 Descriptive statistics of the variables evaluated.
 
 ```{r}
-# sm <- data_variables %>% 
-#   group_by(Departamento) %>% 
+# sm <- data_variables %>%
+#   group_by(Departamento) %>%
 #   summarise(across(DAP:pH, ~ sum(!is.na(.))))
-# 
+#
 # sm
-# 
-# descriptive_numerics <- data_variables %>% 
-#   dlookr::describe() %>% 
-#   select(Variables = "described_variables", n:kurtosis, min = "p00", q1 = "p25", 
+#
+# descriptive_numerics <- data_variables %>%
+#   dlookr::describe() %>%
+#   select(Variables = "described_variables", n:kurtosis, min = "p00", q1 = "p25",
 #          median = "p50", q3 = "p75", max = "p100")
-# 
+#
 # descriptive_numerics
-# 
-# data_variables %>% 
+#
+# data_variables %>%
 #   dlookr::plot_hist_numeric()
-# 
-# data_variables %>% 
-#   group_by(Departamento) %>% 
+#
+# data_variables %>%
+#   group_by(Departamento) %>%
 #   dlookr::plot_box_numeric()
-# 
-# data_variables %>% 
+#
+# data_variables %>%
 #   dlookr::plot_qq_numeric()
-# 
-# descriptive_categoricals <- data_variables %>% 
-#   dlookr::diagnose_category() %>% 
+#
+# descriptive_categoricals <- data_variables %>%
+#   dlookr::diagnose_category() %>%
 #   select(-rank)
-# 
+#
 # descriptive_categoricals
-#   
+#
 # dlookr::plot_bar_category(data_variables)
 ```
 
@@ -214,7 +216,7 @@ Principal Component Analysis (PCA). Results of the contributions and correlation
 ```{r}
 mv <- data_variables %>%
   group_by(Locality) %>%
-  summarise(across(Carbonatos:pH, ~ mean(.x, na.rm = TRUE))) %>% 
+  summarise(across(Carbonatos:pH, ~ mean(.x, na.rm = TRUE))) %>%
   rename(
     Carbonates = Carbonatos,
     EC = CE,
@@ -227,13 +229,13 @@ mv <- data_variables %>%
 # mv_mat <- mv %>%
 #   select(-Locality) %>%
 #   as.data.frame()  # convierte a data.frame base
-# 
+#
 # rownames(mv_mat) <- mv$Locality
-# 
+#
 # pca <- PCA(mv_mat, scale.unit = TRUE, graph = FALSE)
-# 
+#
 # grupo <- as.factor(rownames(mv_mat))  # cada localidad como grupo
-# 
+#
 # fviz_pca_biplot(pca,
 #                 axes = c(1, 2),
 #                 geom.ind = c("point","text"),              # mostrar nombres de las localidades
@@ -253,21 +255,24 @@ pca <- mv %>%
 
 summary(pca, nbelements = Inf, nb.dec = 2)
 
-f1a <- plot.PCA(x = pca, choix = "var"
-                , cex=0.8
-                , label = "var"
-                )
+f1a <- plot.PCA(
+  x = pca, choix = "var",
+  cex = 0.8,
+  label = "var"
+)
 
-f1b <- plot.PCA(x = pca, choix = "ind"
-                , habillage = 1
-                , invisible = c("ind")
-                , cex=0.8
-                , ylim = c(-3,4)
-                , col.hab = c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00",
-                         "#FFFF33", "#A65628", "#F781BF", "#999999", "#66C2A5",
-                         "#FC8D62", "#8DA0CB", "#E78AC3")
-                )
-
+f1b <- plot.PCA(
+  x = pca, choix = "ind",
+  habillage = 1,
+  invisible = c("ind"),
+  cex = 0.8,
+  ylim = c(-3, 4),
+  col.hab = c(
+    "#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00",
+    "#FFFF33", "#A65628", "#F781BF", "#999999", "#66C2A5",
+    "#FC8D62", "#8DA0CB", "#E78AC3"
+  )
+)
 ```
 
 ### Figure 1
@@ -277,45 +282,48 @@ Principal Component Analysis (PCA). Results of the contributions and correlation
 ```{r}
 var <- get_pca_var(pca)
 
-pt1 <- fviz_eig(pca, 
-                addlabels=TRUE,
-                hjust = 0.05,
-                barfill="white",
-                barcolor ="darkblue",
-                linecolor ="red") + 
-  ylim(0, 80) + 
+pt1 <- fviz_eig(pca,
+  addlabels = TRUE,
+  hjust = 0.05,
+  barfill = "white",
+  barcolor = "darkblue",
+  linecolor = "red"
+) +
+  ylim(0, 80) +
   labs(
     title = "PCA - percentage of explained variances",
-    y = "Variance (%)") +
+    y = "Variance (%)"
+  ) +
   theme_minimal()
 
 pt2 <- fviz_contrib(pca,
-                     choice = "var", 
-                     axes = 1, 
-                     top = 10,
-                     fill="white",
-                     color ="darkblue",
-                     sort.val = "desc") +
-  ylim(0, 20) + 
-  labs(title = "Dim 1 - variables contribution") 
+  choice = "var",
+  axes = 1,
+  top = 10,
+  fill = "white",
+  color = "darkblue",
+  sort.val = "desc"
+) +
+  ylim(0, 20) +
+  labs(title = "Dim 1 - variables contribution")
 
 pt3 <- fviz_contrib(pca,
-                     choice = "var", 
-                     axes = 2, 
-                     top = 10,
-                     fill="white",
-                     color ="darkblue",
-                     sort.val = "desc") +
-  ylim(0, 60) + 
-  labs(title = "Dim 2 - variables contribution") 
+  choice = "var",
+  axes = 2,
+  top = 10,
+  fill = "white",
+  color = "darkblue",
+  sort.val = "desc"
+) +
+  ylim(0, 60) +
+  labs(title = "Dim 2 - variables contribution")
 
 pt4 <- function() {
-
   corrplot(var$cor,
-         method="number",
-         tl.col="black",
-         tl.srt=45,)
-
+    method = "number",
+    tl.col = "black",
+    tl.srt = 45,
+  )
 }
 # Construcción del grid
 
@@ -337,18 +345,22 @@ knitr::include_graphics("submission/Figure_1a.jpg")
 # Shannon–Weaver diversity index (H′)
 
 ```{r}
-h <- datos %>% 
-  select('Tree form description','Trunk quality description',
-         'Fruit production description',
-         'Fruit quality description',
-         'Foliage quality description',
-         'Forking description')
+h <- datos %>%
+  select(
+    "Tree form description", "Trunk quality description",
+    "Fruit production description",
+    "Fruit quality description",
+    "Foliage quality description",
+    "Forking description"
+  )
 
-variables <- c('Tree form description','Trunk quality description',
-         'Fruit production description',
-         'Fruit quality description',
-         'Foliage quality description',
-         'Forking description')
+variables <- c(
+  "Tree form description", "Trunk quality description",
+  "Fruit production description",
+  "Fruit quality description",
+  "Foliage quality description",
+  "Forking description"
+)
 
 # Crear lista vacía para guardar resultados
 resultados <- list()
@@ -357,19 +369,21 @@ for (var in variables) {
   # Tabla de frecuencia
   freq_table <- as.data.frame(table(datos[[var]]))
   colnames(freq_table) <- c("State", "Frequency")
-  
+
   # Calcular proporción
   freq_table$Proportion <- round((freq_table$Frequency / sum(freq_table$Frequency)) * 100, 2)
-  
+
   # Índice de Shannon
   H <- diversity(freq_table$Frequency, index = "shannon")
-  
+
   # Añadir variable y valor del índice a la tabla
   freq_table <- freq_table %>%
-    mutate(Qualitative_trait = var,
-           Shannon_Weaver_index = round(H, 2)) %>%
+    mutate(
+      Qualitative_trait = var,
+      Shannon_Weaver_index = round(H, 2)
+    ) %>%
     select(Qualitative_trait, Shannon_Weaver_index, everything())
-  
+
   # Guardar
   resultados[[var]] <- freq_table
 }
@@ -377,7 +391,7 @@ for (var in variables) {
 # Unir todo en una sola tabla
 tabla_shannon <- bind_rows(resultados)
 
-tabla_shannon %>% kable(align = 'c')
+tabla_shannon %>% kable(align = "c")
 
 # tabla_shannon %>%
 #   write_sheet(ss = gs, sheet = "shanon_index")
@@ -389,15 +403,17 @@ tabla_shannon %>% kable(align = 'c')
 mv <- data_variables %>%
   mutate(across(`Tree form`:Parasitos_XX, as.numeric)) %>%
   group_by(Locality) %>%
-  select(-`fito_IIhEd _k`:-Parasitos_XX,
-         -`Branch height`, -Forking, -Basin, -Station,
-         -Individual:-Locality,
-         -Carbonatos:-pH) %>%
+  select(
+    -`fito_IIhEd _k`:-Parasitos_XX,
+    -`Branch height`, -Forking, -Basin, -Station,
+    -Individual:-Locality,
+    -Carbonatos:-pH
+  ) %>%
   summarise(across(where(is.numeric), mean, na.rm = TRUE))
 
 str(data_variables)
 
-mv1 <- mv %>% 
+mv1 <- mv %>%
   textshape::column_to_rownames(., loc = 1)
 
 data_clust <- scale(mv1)
@@ -406,27 +422,35 @@ m_distancia <- get_dist(data_clust, method = "euclidean")
 
 fviz_nbclust(data_clust, pam, method = "silhouette")
 
-pm <- pam(data_clust,4)
+pm <- pam(data_clust, 4)
 
 res <- hcut(m_distancia, k = 4, stand = TRUE, method = "median")
 
-fig <- fviz_dend(res, rect = TRUE, cex = 0.59,
-                 main = NULL,
-                 ylab = "Similarity",
-                 # type = "circular",
-                 repel = T,
-                 ggtheme = theme_void())+
-    theme(axis.text = element_blank(),  # quita los números del eje
-        axis.ticks = element_blank(), 
-        axis.title.y = element_blank())
+fig <- fviz_dend(res,
+  rect = TRUE, cex = 0.59,
+  main = NULL,
+  ylab = "Similarity",
+  # type = "circular",
+  repel = T,
+  ggtheme = theme_void()
+) +
+  theme(
+    axis.text = element_blank(), # quita los números del eje
+    axis.ticks = element_blank(),
+    axis.title.y = element_blank()
+  )
 
-fig %>% 
-  ggsave2(plot = ., "submission/Figure_1.jpg", units = "cm"
-         , width = 18, height = 15)
+fig %>%
+  ggsave2(
+    plot = ., "submission/Figure_1.jpg", units = "cm",
+    width = 18, height = 15
+  )
 
-fig %>% 
-  ggsave2(plot = ., "submission/Figure_1.eps", units = "cm"
-         , width = 18, height = 15)
+fig %>%
+  ggsave2(
+    plot = ., "submission/Figure_1.eps", units = "cm",
+    width = 18, height = 15
+  )
 
 knitr::include_graphics("submission/Figure_1.jpg")
 ```
@@ -439,18 +463,20 @@ data_dist <- data_variables %>%
 
 trait <- "DBH"
 
-lmm <- paste({{trait}}, "~ 1 + (1|repetition) + Locality") %>% as.formula()
+lmm <- paste({{ trait }}, "~ 1 + (1|repetition) + Locality") %>% as.formula()
 
-rmout <- fb %>% 
-  remove_outliers(formula = lmm
-                  , drop_na = T, plot_diag = T)
+rmout <- fb %>%
+  remove_outliers(
+    formula = lmm,
+    drop_na = T, plot_diag = T
+  )
 
-plot_diagnostic(rmout$data$clean, formula = lmm) %>% 
+plot_diagnostic(rmout$data$clean, formula = lmm) %>%
   plot_grid(plotlist = ., ncol = 2)
 
 rmout$outliers
 
-model <- rmout$data$clean %>% 
+model <- rmout$data$clean %>%
   lmer(formula = lmm, .)
 
 Anova(model, type = 3, test.statistic = "F")
@@ -461,20 +487,22 @@ Anova(model, type = 3, test.statistic = "F")
 
 data_long <- data_dist %>%
   pivot_longer(
-    cols = c(DBH, 'Crown diameter', 'Branch height', 'Total height'), 
+    cols = c(DBH, "Crown diameter", "Branch height", "Total height"),
     names_to = "Variable",
     values_to = "Valor"
   )
 
 p1 <- data_long %>%
-  filter(Variable == "DBH") %>% 
+  filter(Variable == "DBH") %>%
   ggplot(aes(x = Locality, y = Valor, fill = Locality)) +
   stat_boxplot(geom = "errorbar", width = 0.5, position = position_dodge(0.8)) +
   geom_boxplot(width = 0.5, position = position_dodge(0.8)) +
-  geom_jitter(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
-              shape = 21, size = 1.8, alpha = 0.6, color = "black") +
+  geom_jitter(
+    position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
+    shape = 21, size = 1.8, alpha = 0.6, color = "black"
+  ) +
   theme_minimal() +
-    theme(
+  theme(
     panel.border = element_rect(colour = "black", fill = NA, linewidth = 0.5),
     panel.background = element_blank()
   ) +
@@ -485,24 +513,26 @@ p1 <- data_long %>%
   labs(x = "", y = "DBH (cm)") +
   scale_y_continuous(limits = c(0, 160))
 
-  # geom_violin(trim = FALSE, alpha = 0.5) +
-  # geom_boxplot(width = 0.1, outlier.shape = NA) +
-  # theme_minimal() +
-  # theme(
-  #   axis.text.x = element_text(angle = 45, hjust = 1),
-  #   legend.position = "none"
-  # ) +
-  # labs(x = "", y = "DBH")
+# geom_violin(trim = FALSE, alpha = 0.5) +
+# geom_boxplot(width = 0.1, outlier.shape = NA) +
+# theme_minimal() +
+# theme(
+#   axis.text.x = element_text(angle = 45, hjust = 1),
+#   legend.position = "none"
+# ) +
+# labs(x = "", y = "DBH")
 
 p2 <- data_long %>%
   filter(Variable == "Crown diameter") %>%
   ggplot(aes(x = Locality, y = Valor, fill = Locality)) +
   stat_boxplot(geom = "errorbar", width = 0.5, position = position_dodge(0.8)) +
   geom_boxplot(width = 0.5, position = position_dodge(0.8)) +
-  geom_jitter(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
-              shape = 21, size = 1.8, alpha = 0.6, color = "black") +
+  geom_jitter(
+    position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
+    shape = 21, size = 1.8, alpha = 0.6, color = "black"
+  ) +
   theme_minimal() +
-    theme(
+  theme(
     panel.border = element_rect(colour = "black", fill = NA, linewidth = 0.5),
     panel.background = element_blank()
   ) +
@@ -517,10 +547,12 @@ p3 <- data_long %>%
   ggplot(aes(x = Locality, y = Valor, fill = Locality)) +
   stat_boxplot(geom = "errorbar", width = 0.5, position = position_dodge(0.8)) +
   geom_boxplot(width = 0.5, position = position_dodge(0.8)) +
-  geom_jitter(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
-              shape = 21, size = 1.8, alpha = 0.6, color = "black") +
+  geom_jitter(
+    position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
+    shape = 21, size = 1.8, alpha = 0.6, color = "black"
+  ) +
   theme_minimal() +
-    theme(
+  theme(
     panel.border = element_rect(colour = "black", fill = NA, linewidth = 0.5),
     panel.background = element_blank()
   ) +
@@ -535,10 +567,12 @@ p4 <- data_long %>%
   ggplot(aes(x = Locality, y = Valor, fill = Locality)) +
   stat_boxplot(geom = "errorbar", width = 0.5, position = position_dodge(0.8)) +
   geom_boxplot(width = 0.5, position = position_dodge(0.8)) +
-  geom_jitter(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
-              shape = 21, size = 1.8, alpha = 0.6, color = "black") +
+  geom_jitter(
+    position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
+    shape = 21, size = 1.8, alpha = 0.6, color = "black"
+  ) +
   theme_minimal() +
-    theme(
+  theme(
     panel.border = element_rect(colour = "black", fill = NA, linewidth = 0.5),
     panel.background = element_blank()
   ) +
@@ -553,28 +587,39 @@ p4 <- data_long %>%
 ## Figure 2
 
 ```{r}
-fig <- list(p1 + labs(x = NULL) + theme(legend.position="none"
-                                        , axis.title.x=element_blank()
-                                        , axis.text.x=element_blank()
-                                        , axis.ticks.x=element_blank())
-           , p4 + labs(x = NULL) + theme(legend.position="none"
-                                        , axis.title.x=element_blank()
-                                        , axis.text.x=element_blank()
-                                        , axis.ticks.x=element_blank())
-           , p2 + theme(legend.position="none")
-           , p3 + theme(legend.position="none")
-           ) %>% 
-  plot_grid(plotlist = ., ncol = 2
-            , labels = "auto"
-            ,align = 'v', rel_heights = c(1, 1.1)) 
+fig <- list(
+  p1 + labs(x = NULL) + theme(
+    legend.position = "none",
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  ),
+  p4 + labs(x = NULL) + theme(
+    legend.position = "none",
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  ),
+  p2 + theme(legend.position = "none"),
+  p3 + theme(legend.position = "none")
+) %>%
+  plot_grid(
+    plotlist = ., ncol = 2,
+    labels = "auto",
+    align = "v", rel_heights = c(1, 1.1)
+  )
 
-fig %>% 
-  ggsave2(plot = ., "submission/Figure_2.jpg", units = "cm"
-         , width = 30, height = 26)
+fig %>%
+  ggsave2(
+    plot = ., "submission/Figure_2.jpg", units = "cm",
+    width = 30, height = 26
+  )
 
-fig %>% 
-  ggsave2(plot = ., "submission/Figure_2.eps", units = "cm"
-         , width = 30, height = 26)
+fig %>%
+  ggsave2(
+    plot = ., "submission/Figure_2.eps", units = "cm",
+    width = 30, height = 26
+  )
 
 knitr::include_graphics("submission/Figure_2.jpg")
 ```
@@ -587,12 +632,12 @@ data_variables %>% str()
 
 #> sebas no te olvides de limpiar las cabeceras siempre
 
-h2d <- data_variables %>% 
-  dplyr::select(1:'Foliage quality') %>% 
+h2d <- data_variables %>%
+  dplyr::select(1:"Foliage quality") %>%
   mutate(across(1:Basin, ~ as.factor(.))) %>%
-  mutate(across(DBH:length(.), ~ as.numeric(.))) %>% 
-  rename_with(~tolower(.)) %>% # poner en minusculas
-  rename_with(~iconv(x = ., to = "ASCII//TRANSLIT")) %>% # quitar todos las letras extrañas 
+  mutate(across(DBH:length(.), ~ as.numeric(.))) %>%
+  rename_with(~ tolower(.)) %>% # poner en minusculas
+  rename_with(~ iconv(x = ., to = "ASCII//TRANSLIT")) %>% # quitar todos las letras extrañas
   rename(
     crown_diameter = `crown diameter`,
     branch_height = `branch height`,
@@ -610,19 +655,19 @@ names(h2d)
 
 group <- "departament"
 
-mgroup <- h2d %>% 
-  dplyr::select({{group}}) %>% 
-  unique() %>% 
-  deframe() %>% as.vector()
+mgroup <- h2d %>%
+  dplyr::select({{ group }}) %>%
+  unique() %>%
+  deframe() %>%
+  as.vector()
 
 rslt <- 1:length(mgroup) %>% map(\(a) {
-
   npop <- mgroup[a]
 
   cat("\n#>", npop)
 
   gpop <- h2d %>%
-    filter(.[[group]] %in% {{npop}}) %>%
+    filter(.[[group]] %in% {{ npop }}) %>%
     dplyr::select(!c(fruit_quality, foliage_quality)) # al parecer no tiene variabilidad
 
   # str(gpop)
@@ -630,31 +675,31 @@ rslt <- 1:length(mgroup) %>% map(\(a) {
   nvar <- match("dbh", names(gpop))
 
   groups <- nvar:length(gpop) %>% map(\(b) {
-
     trait <- names(gpop)[b]
 
     cat("\n#>", trait)
 
     gpop %>%
-       H2cal(data = .
-        , trait = trait
-        , gen.name = "locality"
-        , rep.n = 8 # maximo valor de n localidades
-        , fixed.model = "0 + (1|province) + locality"
-        , random.model = "1 + (1|province) + (1|locality)"
-        , emmeans = FALSE
-        , plot_diag = TRUE
-        , outliers.rm = TRUE
-        , trial = npop
-        )
+      H2cal(
+        data = .,
+        trait = trait,
+        gen.name = "locality",
+        rep.n = 8 # maximo valor de n localidades
+        , fixed.model = "0 + (1|province) + locality",
+        random.model = "1 + (1|province) + (1|locality)",
+        emmeans = FALSE,
+        plot_diag = TRUE,
+        outliers.rm = TRUE,
+        trial = npop
+      )
   })
 })
 
-h2tab <- 1:length(rslt) %>% map(\(x) {
+h2tab <- 1:length(rslt) %>%
+  map(\(x) {
+    nlst <- rslt[[x]]
 
-  nlst <- rslt[[x]]
-
-  1:length(nlst) %>% map(\(z) {
+    1:length(nlst) %>% map(\(z) {
       rslt[[x]][[z]][["tabsmr"]]
     })
   }) %>%
@@ -666,16 +711,16 @@ h2tab <- 1:length(rslt) %>% map(\(x) {
 h2tab %>% kable(caption = "Variance component table")
 
 
-h2blues <- 1:length(rslt) %>% map(\(x) {
+h2blues <- 1:length(rslt) %>%
+  map(\(x) {
+    nlst <- rslt[[x]]
 
-  nlst <- rslt[[x]]
-
-  1:length(nlst) %>% map(\(z) {
+    1:length(nlst) %>% map(\(z) {
       rslt[[x]][[z]][["blues"]] %>%
-      dplyr::select(!smith.w) %>%
-      pivot_longer(!c(trial, locality), names_to = "trait")
+        dplyr::select(!smith.w) %>%
+        pivot_longer(!c(trial, locality), names_to = "trait")
     })
-  })  %>%
+  }) %>%
   bind_rows() %>%
   ungroup() %>%
   group_by(trait) %>%
@@ -695,7 +740,7 @@ Principal Component Analysis (PCA). Results of the contributions and correlation
 
 ```{r}
 mv <- data_variables %>%
-  mutate(across(`Tree form`:Parasitos_XX, as.numeric)) %>% 
+  mutate(across(`Tree form`:Parasitos_XX, as.numeric)) %>%
   select(DBH:`Forking`)
 
 str(mv)
@@ -708,46 +753,46 @@ pca <- mv %>%
 summary(pca, nbelements = Inf, nb.dec = 2)
 
 f5a <- fviz_pca_var(pca,
-             # col.var = "contrib", # Color by contributions to the PC
-             # gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             title = "PCA graph of variables",
-             repel = TRUE,     # Avoid text overlapping
+  # col.var = "contrib", # Color by contributions to the PC
+  # gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+  title = "PCA graph of variables",
+  repel = TRUE, # Avoid text overlapping
 )
 
 grupo <- as.factor(datos$Locality)
 
 f5b <- fviz_pca_ind(pca,
-                axes = c(1,2),
-                col.ind = grupo,
-                legend.title = "Stations",
-                geom.ind = "point",
-                title = "PCA graph of individuals",
-                repel = FALSE
+  axes = c(1, 2),
+  col.ind = grupo,
+  legend.title = "Stations",
+  geom.ind = "point",
+  title = "PCA graph of individuals",
+  repel = FALSE
 )
 
-# data_pca <- data_variables %>% 
-#       mutate(across(c(Forma_arbol:Parasitos_XX), as.numeric)) %>% 
-#       select(-(Individuo:Cuenca)) %>% 
+# data_pca <- data_variables %>%
+#       mutate(across(c(Forma_arbol:Parasitos_XX), as.numeric)) %>%
+#       select(-(Individuo:Cuenca)) %>%
 #       select(-(`fito_IIhEd _k`:Parasitos_XX)) %>%
 #       select(-c(Altura_ram, Bifurcacion))
 #       # textshape::column_to_rownames(., loc = 1)
-# 
+#
 # str(data_pca)
-# 
+#
 # res.pca <- PCA(mv = data_pca, scale.unit = T, graph = F)
-# 
+#
 # summary(res.pca)
-# 
+#
 # fviz_screeplot(res.pca)
-# 
+#
 # fviz_pca_var(res.pca,
 #              col.var = "contrib", # Color by contributions to the PC
 #              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
 #              repel = TRUE     # Avoid text overlapping
 # )
-# 
+#
 # grupo <- as.factor(datos$Localidad)
-# 
+#
 # p1 <- fviz_pca_biplot(pca,
 #                 axes = c(1,2),
 #                 # col.ind = grupo,
@@ -768,22 +813,24 @@ f5b <- fviz_pca_ind(pca,
 Principal Component Analysis (PCA). Results of the contributions and correlation of the variables in the Principal Component Analysis (PCA).
 
 ```{r}
-fig <- list(f5a, f5b) %>% 
-  plot_grid(plotlist = ., ncol = 2, nrow = 1
-            , labels = "auto"
-            , rel_widths = c(1.1, 1.5)
-            )
-fig %>% 
-  ggsave2(plot = ., "submission/Figure_4.jpg", units = "cm"
-         , width = 28
-         , height = 12
-         )
-fig %>% 
-  ggsave2(plot = ., "submission/Figure_4.eps", units = "cm"
-         , width = 28
-         , height = 12
-         )
+fig <- list(f5a, f5b) %>%
+  plot_grid(
+    plotlist = ., ncol = 2, nrow = 1,
+    labels = "auto",
+    rel_widths = c(1.1, 1.5)
+  )
+fig %>%
+  ggsave2(
+    plot = ., "submission/Figure_4.jpg", units = "cm",
+    width = 28,
+    height = 12
+  )
+fig %>%
+  ggsave2(
+    plot = ., "submission/Figure_4.eps", units = "cm",
+    width = 28,
+    height = 12
+  )
 
 knitr::include_graphics("submission/Figure_4.jpg")
 ```
-
