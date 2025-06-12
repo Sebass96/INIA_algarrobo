@@ -449,10 +449,13 @@ fig <- heatmaply(
   key.title = "Color Key"
 )
 
-ppi <- 300
-png("heatmap.png", width=7*ppi, height=7*ppi, res=ppi)
-
-graphics.off()
+plotly::save_image(
+  fig,
+  file = "heatmap.pdf",
+  # width = 2362,     # en píxeles
+  # height = 2362,    # en píxeles
+  # scale = 1
+  )
 
 # # res <- hcut(m_distancia, k = 4, stand = TRUE, method = "median")
 # 
