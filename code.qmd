@@ -419,6 +419,8 @@ mv1 <- mv %>%
 
 data_clust <- scale(mv1)
 
+data_clust <- as.matrix(data_clust)
+
 m_distancia <- get_dist(data_clust, method = "euclidean")
 
 m_distancia <- as.matrix(m_distancia)
@@ -428,7 +430,7 @@ fviz_nbclust(data_clust, pam, method = "silhouette")
 pm <- pam(data_clust, 4)
 
 fig <- heatmaply(
-  m_distancia,
+  data_clust,
   hclust_method = "median",
   k_row = 4,  # número de clusters para filas (localidades)
   # k_col = 2,  # número de clusters para columnas (variables),
@@ -441,46 +443,46 @@ fig <- heatmaply(
   fontsize_row = 8,
   fontsize_col = 8,
   margins = c(60, 100),
-  labRow = rownames(m_distancia),
-  labCol = colnames(m_distancia),
+  labRow = rownames(data_clust),
+  labCol = colnames(data_clust),
   dendrogram = "row",
   key.title = "Color Key"
 )
 
-png(filename = "Hetmap_biometria_png.png", width = 1000, height = 800, units = "px", res= 300) 
+ppi <- 300
+png("heatmap.png", width=7*ppi, height=7*ppi, res=ppi)
 
+graphics.off()
 
+# # res <- hcut(m_distancia, k = 4, stand = TRUE, method = "median")
+# 
+# fig <- fviz_dend(res,
+#   rect = TRUE, cex = 0.59,
+#   main = NULL,
+#   ylab = "Similarity",
+#   # type = "circular",
+#   repel = T,
+#   ggtheme = theme_void()
+# ) +
+#   theme(
+#     axis.text = element_blank(), # quita los números del eje
+#     axis.ticks = element_blank(),
+#     axis.title.y = element_blank()
+#   )
 
-
-res <- hcut(m_distancia, k = 4, stand = TRUE, method = "median")
-
-fig <- fviz_dend(res,
-  rect = TRUE, cex = 0.59,
-  main = NULL,
-  ylab = "Similarity",
-  # type = "circular",
-  repel = T,
-  ggtheme = theme_void()
-) +
-  theme(
-    axis.text = element_blank(), # quita los números del eje
-    axis.ticks = element_blank(),
-    axis.title.y = element_blank()
-  )
-
-fig %>%
-  ggsave2(
-    plot = ., "submission/Figure_1.jpg", units = "cm",
-    width = 18, height = 15
-  )
-
-fig %>%
-  ggsave2(
-    plot = ., "submission/Figure_1.eps", units = "cm",
-    width = 18, height = 15
-  )
-
-knitr::include_graphics("submission/Figure_1.jpg")
+# fig %>%
+#   ggsave2(
+#     plot = ., "submission/Figure_1.jpg", units = "cm",
+#     width = 18, height = 15
+#   )
+# 
+# fig %>%
+#   ggsave2(
+#     plot = ., "submission/Figure_1.eps", units = "cm",
+#     width = 18, height = 15
+#   )
+# 
+# knitr::include_graphics("submission/Figure_1.jpg")
 ```
 
 # Traits distribution by population
