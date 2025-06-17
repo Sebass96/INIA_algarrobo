@@ -29,6 +29,8 @@ library(textshape)
 library(googlesheets4)
 library(cluster)
 library(vegan)
+library(webshot2)
+library(htmlwidgets)
 source("https://inkaverse.com/setup.r")
 
 set.seed(2025)
@@ -449,13 +451,14 @@ fig <- heatmaply(
   key.title = "Color Key"
 )
 
-plotly::save_image(
-  fig,
-  file = "heatmap.pdf",
-  # width = 2362,     # en píxeles
-  # height = 2362,    # en píxeles
-  # scale = 1
-  )
+# Guardar temporalmente el heatmap como HTML
+saveWidget(fig, "heatmap_temp.html", selfcontained = TRUE)
+
+# Exportar como imagen PNG (o PDF)
+webshot("heatmap_temp.html", file = "heatmap_localidades.png", vwidth = 1200, vheight = 1000)
+
+webshot("heatmap_temp.html", file = "heatmap_localidades_1.jpg", vwidth = 1000, vheight = 800)
+
 
 # # res <- hcut(m_distancia, k = 4, stand = TRUE, method = "median")
 # 
