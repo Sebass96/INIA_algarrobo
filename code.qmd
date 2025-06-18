@@ -423,9 +423,9 @@ data_clust <- scale(mv1)
 
 data_clust <- as.matrix(data_clust)
 
-m_distancia <- get_dist(data_clust, method = "euclidean")
-
-m_distancia <- as.matrix(m_distancia)
+# m_distancia <- get_dist(data_clust, method = "euclidean")
+# 
+# m_distancia <- as.matrix(m_distancia)
 
 fviz_nbclust(data_clust, pam, method = "silhouette")
 
