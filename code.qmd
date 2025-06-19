@@ -424,7 +424,7 @@ data_clust <- scale(mv1)
 data_clust <- as.matrix(data_clust)
 
 # m_distancia <- get_dist(data_clust, method = "euclidean")
-# 
+#
 # m_distancia <- as.matrix(m_distancia)
 
 fviz_nbclust(data_clust, pam, method = "silhouette")
@@ -434,7 +434,7 @@ pm <- pam(data_clust, 4)
 fig <- heatmaply(
   data_clust,
   hclust_method = "median",
-  k_row = 4,  # número de clusters para filas (localidades)
+  k_row = 4, # número de clusters para filas (localidades)
   # k_col = 2,  # número de clusters para columnas (variables),
   colors = colorRampPalette(c("red", "yellow", "green"))(256),
   xlab = "Response variables",
@@ -461,7 +461,7 @@ webshot("heatmap_temp.html", file = "heatmap_localidades_1.jpg", vwidth = 1000, 
 
 
 # # res <- hcut(m_distancia, k = 4, stand = TRUE, method = "median")
-# 
+#
 # fig <- fviz_dend(res,
 #   rect = TRUE, cex = 0.59,
 #   main = NULL,
@@ -481,13 +481,13 @@ webshot("heatmap_temp.html", file = "heatmap_localidades_1.jpg", vwidth = 1000, 
 #     plot = ., "submission/Figure_1.jpg", units = "cm",
 #     width = 18, height = 15
 #   )
-# 
+#
 # fig %>%
 #   ggsave2(
 #     plot = ., "submission/Figure_1.eps", units = "cm",
 #     width = 18, height = 15
 #   )
-# 
+#
 # knitr::include_graphics("submission/Figure_1.jpg")
 ```
 
@@ -521,6 +521,8 @@ plot_diagnostic(data_dist, formula = lmm) %>%
 
 model <- data_dist %>%
   lm(formula = lmm, .)
+
+anova(model)
 
 # # Residuales Estandarizados
 #
@@ -607,6 +609,8 @@ plot_diagnostic(data_dist, formula = lmm) %>%
 model <- data_dist %>%
   lm(formula = lmm, .)
 
+anova(model)
+
 mc <- emmeans(model, ~Locality) %>%
   cld(Letters = letters, reversed = T) %>%
   mutate(across(".group", ~ trimws(.))) %>%
@@ -667,6 +671,8 @@ plot_diagnostic(data_dist, formula = lmm) %>%
 model <- data_dist %>%
   lm(formula = lmm, .)
 
+anova(model)
+
 mc <- emmeans(model, ~Locality) %>%
   cld(Letters = letters, reversed = T) %>%
   mutate(across(".group", ~ trimws(.))) %>%
@@ -726,6 +732,8 @@ plot_diagnostic(data_dist, formula = lmm) %>%
 
 model <- data_dist %>%
   lm(formula = lmm, .)
+
+anova(model)
 
 mc <- emmeans(model, ~Locality) %>%
   cld(Letters = letters, reversed = T) %>%
@@ -932,7 +940,8 @@ Principal Component Analysis (PCA). Results of the contributions and correlation
 ```{r}
 mv <- data_variables %>%
   mutate(across(`Tree form`:Parasitos_XX, as.numeric)) %>%
-  select(DBH:`Forking`)
+  select(DBH:`Forking`) %>%
+  select(-`Forking`, -`Branch height`)
 
 str(mv)
 
@@ -985,18 +994,20 @@ f5b <- fviz_pca_ind(pca,
 # grupo <- as.factor(datos$Localidad)
 #
 # p1 <- fviz_pca_biplot(pca,
-#                 axes = c(1,2),
-#                 # col.ind = grupo,
-#                 legend.title = "Estaciones",
-#                 geom.ind = "point",
-#                 repel = FALSE
+#   axes = c(1, 2),
+#   col.ind = grupo,
+#   legend.title = "Estaciones",
+#   geom.ind = "point",
+#   col.var = "black",
+#   repel = T
 # ) +
-# theme(
-#     legend.position = "bottom",        # Leyenda abajo
-#     legend.justification = "center",   # Centra la leyenda
-#     legend.direction = "horizontal"    # Distribuye los elementos horizontalmente
+#   theme(
+#     legend.position = "bottom", # Leyenda abajo
+#     legend.justification = "center", # Centra la leyenda
+#     legend.direction = "horizontal" # Distribuye los elementos horizontalmente
 #   ) +
-#   guides(color = guide_legend(nrow = 1))
+#   guides(color = guide_legend(nrow = 1)) +
+#   ylim(c(-4, 4))
 ```
 
 ### Figure 5
