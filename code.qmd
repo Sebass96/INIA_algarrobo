@@ -419,9 +419,7 @@ str(data_variables)
 mv1 <- mv %>%
   textshape::column_to_rownames(., loc = 1)
 
-data_clust <- scale(mv1)
-
-data_clust <- as.matrix(data_clust)
+mv1 <- as.matrix(mv1)
 
 # m_distancia <- get_dist(data_clust, method = "euclidean")
 #
@@ -432,8 +430,9 @@ fviz_nbclust(data_clust, pam, method = "silhouette")
 pm <- pam(data_clust, 4)
 
 fig <- heatmaply(
-  data_clust,
+  mv1,
   hclust_method = "median",
+  scale = "column",
   k_row = 4, # número de clusters para filas (localidades)
   # k_col = 2,  # número de clusters para columnas (variables),
   colors = colorRampPalette(c("red", "yellow", "green"))(256),
@@ -445,12 +444,11 @@ fig <- heatmaply(
   fontsize_row = 8,
   fontsize_col = 8,
   margins = c(60, 100),
-  labRow = rownames(data_clust),
-  labCol = colnames(data_clust),
+  labRow = rownames(mv1),
+  labCol = colnames(mv1),
   dendrogram = "row",
   key.title = "Color Key"
 )
-
 # Guardar temporalmente el heatmap como HTML
 saveWidget(fig, "heatmap_temp.html", selfcontained = TRUE)
 
@@ -458,7 +456,6 @@ saveWidget(fig, "heatmap_temp.html", selfcontained = TRUE)
 webshot("heatmap_temp.html", file = "heatmap_localidades.png", vwidth = 1200, vheight = 1000)
 
 webshot("heatmap_temp.html", file = "heatmap_localidades_1.jpg", vwidth = 1000, vheight = 800)
-
 
 # # res <- hcut(m_distancia, k = 4, stand = TRUE, method = "median")
 #
