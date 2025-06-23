@@ -901,7 +901,12 @@ h2tab <- 1:length(rslt) %>%
   }) %>%
   bind_rows() %>%
   rename(Trait = trait, Heritability = H2.s, Population = trial, Localities = geno) %>%
-  dplyr::select(!matches("H2|rep|env|year"))
+  dplyr::select(!matches("H2|rep|env|year")) %>% 
+  mutate(vg_vg = round(V.g/V.g, 1)) %>% 
+  mutate(ve_vg = round(V.e/V.g, 1)) %>% 
+  mutate(vp_vg = round(V.p/V.g, 1)) %>% 
+  unite("Ratio", c(vg_vg, vp_vg, ve_vg), sep = ":") %>% 
+  mutate(across(where(is.numeric), ~ round(., 2)))
 
 
 h2tab %>% kable(caption = "Variance component table")
@@ -924,8 +929,7 @@ h2blues <- 1:length(rslt) %>%
 
 h2blues %>% kable(caption = "BLUEs")
 
-# h2tab %>%
-#   write_sheet(ss = gs, sheet = "h2tab")
+# h2tab %>% write_sheet(ss = gs, sheet = "h2tab")
 ```
 
 # Multivariate
