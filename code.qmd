@@ -165,6 +165,11 @@ data_coordenadas <- gs %>%
   )
 
 str(data_coordenadas)
+
+data_clima <- gs %>%
+  range_read("clima")
+
+str(data_clima)
 ```
 
 ```{r}
@@ -213,6 +218,8 @@ Descriptive statistics of the variables evaluated.
 # Multivariate
 
 ## Principal Component Analysis (PCA)
+
+### Soil
 
 Principal Component Analysis (PCA). Results of the contributions and correlation of the variables in the Principal Component Analysis (PCA).
 
@@ -343,6 +350,41 @@ ggsave2(plot = grid_final, "submission/Figure_1a.jpg", height = 30, width = 28, 
 ggsave2(plot = grid_final, "submission/Figure_1a.eps", height = 30, width = 28, units = "cm")
 
 knitr::include_graphics("submission/Figure_1a.jpg")
+```
+
+# Wheater
+
+```{r}
+mv <- data_clima
+
+pca <- mv %>%
+  PCA(scale.unit = T, quali.sup = 1, graph = F)
+
+# summary
+
+summary(pca, nbelements = Inf, nb.dec = 2)
+
+fxa <- plot.PCA(
+  x = pca, choix = "var",
+  cex = 0.8,
+  label = "var"
+)
+
+fxb <- plot.PCA(
+  x = pca, choix = "ind",
+  habillage = 1,
+  invisible = c("ind"),
+  cex = 0.8,
+  ylim = c(-2, 2),
+  col.hab = c(
+    "#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00",
+    "#FFFF33", "#A65628", "#F781BF", "#999999", "#66C2A5",
+    "#FC8D62", "#8DA0CB", "#E78AC3"
+  )
+)
+
+plot_grid(fxa, fxb, ncol = 2, labels = "auto", rel_widths = c(1, 1.5))
+
 ```
 
 # Shannon–Weaver diversity index (H′)
@@ -1037,3 +1079,4 @@ fig %>%
 
 knitr::include_graphics("submission/Figure_4.jpg")
 ```
+
