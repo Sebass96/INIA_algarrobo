@@ -219,7 +219,7 @@ Descriptive statistics of the variables evaluated.
 
 ## Principal Component Analysis (PCA)
 
-### Soil
+### 
 
 Principal Component Analysis (PCA). Results of the contributions and correlation of the variables in the Principal Component Analysis (PCA).
 
@@ -228,61 +228,60 @@ mv <- data_variables %>%
   group_by(Locality) %>%
   summarise(across(Carbonatos:pH, ~ mean(.x, na.rm = TRUE))) %>%
   rename(
-    Carbonates = Carbonatos,
+    CaCO3 = Carbonatos,
     EC = CE,
-    Phosphorus = Fosforo,
-    `Organic matter` = Mat_Org,
-    Nitrogen = Nitrogeno,
-    Potassium = Potasio
+    P = Fosforo,
+    OM = Mat_Org,
+    N = Nitrogeno,
+    K = Potasio
   )
 
-# mv_mat <- mv %>%
-#   select(-Locality) %>%
-#   as.data.frame()  # convierte a data.frame base
-#
-# rownames(mv_mat) <- mv$Locality
-#
-# pca <- PCA(mv_mat, scale.unit = TRUE, graph = FALSE)
-#
-# grupo <- as.factor(rownames(mv_mat))  # cada localidad como grupo
-#
-# fviz_pca_biplot(pca,
-#                 axes = c(1, 2),
-#                 geom.ind = c("point","text"),              # mostrar nombres de las localidades
-#                 # col.ind = grupo,                # colores por localidad
-#                 col.var = "contrib",            # variables según contribución
-#                 gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),  # gradiente para contribución
-#                 legend.title = list(fill = "Contribución", color = "Contribución"),
-#                 repel = TRUE
-# ) +
-#   # theme(legend.position = "none") +
-#    ylim(c(-2,4))
+mv <- left_join(mv, data_clima, by = "Locality")
+
+mv <- as.data.frame(mv)
+
+rownames(mv) <- mv$Locality
+
+head(mv)
 
 pca <- mv %>%
   PCA(scale.unit = T, quali.sup = 1, graph = F)
+
+rownames(pca$ind$coord)
 
 # summary
 
 summary(pca, nbelements = Inf, nb.dec = 2)
 
-f1a <- plot.PCA(
-  x = pca, choix = "var",
-  cex = 0.8,
-  label = "var"
+grupos_var <- c(
+  rep("Edaphics", 7),
+  rep("Climatics", 7),
+  rep("Physiographics", 3)
 )
 
-f1b <- plot.PCA(
-  x = pca, choix = "ind",
-  habillage = 1,
-  invisible = c("ind"),
-  cex = 0.8,
-  ylim = c(-3, 4),
-  col.hab = c(
-    "#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00",
-    "#FFFF33", "#A65628", "#F781BF", "#999999", "#66C2A5",
-    "#FC8D62", "#8DA0CB", "#E78AC3"
+pt <- fviz_pca_biplot(pca,
+  label = c("ind", "var"),
+  labelsize = 3,
+  col.var = grupos_var,
+  col.ind = "black",
+  palette = c(
+    "Edaphics" = "#C69C6D",
+    "Climatics" = "steelblue",
+    "Physiographics" = "forestgreen"
+  ),
+  legend.title = "Variables type",
+  geom.var = c("arrow", "text"),
+  repel = TRUE,
+  addEllipses = FALSE
+) +
+  theme_minimal(base_size = 11) +
+  theme(
+    legend.position = "bottom",
+    panel.border = element_rect(color = "gray80", fill = NA, size = 0.7),
+    panel.grid = element_line(color = "gray90")
   )
-)
+
+pt
 ```
 
 ### Figure 1
@@ -290,101 +289,11 @@ f1b <- plot.PCA(
 Principal Component Analysis (PCA). Results of the contributions and correlation of the variables in the Principal Component Analysis (PCA).
 
 ```{r}
-var <- get_pca_var(pca)
+ggsave2(plot = pt, "submission/Figure_1a.jpg", height = 8, width = 10, units = "in", dpi = 300)
 
-pt1 <- fviz_eig(pca,
-  addlabels = TRUE,
-  hjust = 0.05,
-  barfill = "white",
-  barcolor = "darkblue",
-  linecolor = "red"
-) +
-  ylim(0, 80) +
-  labs(
-    title = "PCA - percentage of explained variances",
-    y = "Variance (%)"
-  ) +
-  theme_minimal()
-
-pt2 <- fviz_contrib(pca,
-  choice = "var",
-  axes = 1,
-  top = 10,
-  fill = "white",
-  color = "darkblue",
-  sort.val = "desc"
-) +
-  ylim(0, 20) +
-  labs(title = "Dim 1 - variables contribution")
-
-pt3 <- fviz_contrib(pca,
-  choice = "var",
-  axes = 2,
-  top = 10,
-  fill = "white",
-  color = "darkblue",
-  sort.val = "desc"
-) +
-  ylim(0, 60) +
-  labs(title = "Dim 2 - variables contribution")
-
-pt4 <- function() {
-  corrplot(var$cor,
-    method = "number",
-    tl.col = "black",
-    tl.srt = 45,
-  )
-}
-# Construcción del grid
-
-fila1 <- plot_grid(f1a, f1b, ncol = 2, labels = "auto", rel_widths = c(1, 1.15))
-
-columna_c <- plot_grid(pt1, pt2, pt3, ncol = 1, labels = "c")
-
-fila2 <- plot_grid(columna_c, pt4, ncol = 2, labels = c("", "d"), rel_widths = c(1, 1.3))
-
-grid_final <- plot_grid(fila1, fila2, ncol = 1, rel_heights = c(1, 1.2))
-
-ggsave2(plot = grid_final, "submission/Figure_1a.jpg", height = 30, width = 28, units = "cm")
-
-ggsave2(plot = grid_final, "submission/Figure_1a.eps", height = 30, width = 28, units = "cm")
+ggsave2(plot = pt, "submission/Figure_1a.eps", height = 8, width = 10, units = "in", dpi = 600)
 
 knitr::include_graphics("submission/Figure_1a.jpg")
-```
-
-# Wheater
-
-```{r}
-mv <- data_clima
-
-pca <- mv %>%
-  PCA(scale.unit = T, quali.sup = 1, graph = F)
-
-# summary
-
-summary(pca, nbelements = Inf, nb.dec = 2)
-
-fxa <- plot.PCA(
-  x = pca, choix = "var",
-  cex = 0.8,
-  label = "var"
-)
-
-fxb <- plot.PCA(
-  x = pca, choix = "ind",
-  habillage = 1,
-  invisible = c("ind"),
-  cex = 0.8,
-  ylim = c(-2, 2),
-  col.hab = c(
-    "#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00",
-    "#FFFF33", "#A65628", "#F781BF", "#999999", "#66C2A5",
-    "#FC8D62", "#8DA0CB", "#E78AC3"
-  )
-)
-
-plot_grid(fxa, fxb, ncol = 2, labels = "auto", rel_widths = c(1, 1.5))
-
 ```
 
 # Shannon–Weaver diversity index (H′)
@@ -943,11 +852,11 @@ h2tab <- 1:length(rslt) %>%
   }) %>%
   bind_rows() %>%
   rename(Trait = trait, Heritability = H2.s, Population = trial, Localities = geno) %>%
-  dplyr::select(!matches("H2|rep|env|year")) %>% 
-  mutate(vg_vg = round(V.g/V.g, 1)) %>% 
-  mutate(ve_vg = round(V.e/V.g, 1)) %>% 
-  mutate(vp_vg = round(V.p/V.g, 1)) %>% 
-  unite("Ratio", c(vg_vg, vp_vg, ve_vg), sep = ":") %>% 
+  dplyr::select(!matches("H2|rep|env|year")) %>%
+  mutate(vg_vg = round(V.g / V.g, 1)) %>%
+  mutate(ve_vg = round(V.e / V.g, 1)) %>%
+  mutate(vp_vg = round(V.p / V.g, 1)) %>%
+  unite("Ratio", c(vg_vg, vp_vg, ve_vg), sep = ":") %>%
   mutate(across(where(is.numeric), ~ round(., 2)))
 
 
@@ -1079,4 +988,3 @@ fig %>%
 
 knitr::include_graphics("submission/Figure_4.jpg")
 ```
-
