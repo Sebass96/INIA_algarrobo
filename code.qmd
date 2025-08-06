@@ -866,13 +866,71 @@ Principal Component Analysis (PCA). Results of the contributions and correlation
 ```{r}
 mv <- data_variables %>%
   mutate(across(`Tree form`:Parasitos_XX, as.numeric)) %>%
-  select(DBH:`Forking`) %>%
-  select(-`Forking`, -`Branch height`)
+  select(Locality:`Forking`) %>%
+  select(-`Forking`, -`Branch height`, -Station,-Basin)
 
 str(mv)
 
+mv <- data_variables %>%
+  mutate(across(`Tree form`:Parasitos_XX, as.numeric)) %>%
+  select(Locality:`Forking`) %>% 
+  select(-`Forking`, -`Branch height`, -Station,-Basin) %>% 
+  group_by(Locality) %>%
+  summarise(across(DBH:`Foliage quality`, ~ mean(.x, na.rm = TRUE)))
+
+mv <- as.data.frame(mv)
+
 pca <- mv %>%
   PCA(scale.unit = T, graph = F)
+
+
+## PCA
+
+rownames(mv) <- mv$Locality
+
+head(mv)
+
+pca <- mv %>%
+  PCA(scale.unit = T, quali.sup = 1, graph = F)
+
+rownames(pca$ind$coord)
+
+# summary
+
+summary(pca, nbelements = Inf, nb.dec = 2)
+
+grupos_var <- c(
+  rep("Cuantitative", 3),
+  rep("Cualitative", 5)
+)
+
+grupos_ind <- as.factor(datos$Locality)
+
+pt <- fviz_pca_biplot(pca,
+  label = "var",
+  labelsize = 3,
+  col.var = "black",
+  col.ind = grupos_ind,
+  # palette = c(
+  #   "Cuantitative" = "steelblue",
+  #   "Cualitative" = "forestgreen"
+  # ),
+  legend.title = "Variables type",
+  geom.var = c("arrow", "text"),
+  repel = TRUE,
+  addEllipses = FALSE
+) +
+  theme_minimal(base_size = 11) +
+  theme(
+    legend.position = "bottom",
+    panel.border = element_rect(color = "gray80", fill = NA, size = 0.7),
+    panel.grid = element_line(color = "gray90")
+  )
+
+pt
+
+pt %>%
+  ggsave2(plot = ., "submission/Figure_x.jpg", height = 8, width = 10, units = "in", dpi = 300)
 
 # summary
 
