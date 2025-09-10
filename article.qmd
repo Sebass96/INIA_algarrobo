@@ -9,7 +9,7 @@ format:
     toc: false
     toc-title: Indice
     section-numbers: true
-    reference-doc: "files/template.docx"
+    reference-doc: "files/template_2.dot"
     output-file: "manuscript"
 editor_options: 
   chunk_output_type: console
