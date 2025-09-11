@@ -269,7 +269,7 @@ In terms of frequency distributions, tree form was dominated by individuals with
 
 ## Phenotypic diversity in quantitative traits
 
-To evaluate phenotypic diversity in quantitative traits, variability was analyzed across localities. The results revealed pronounced heterogeneity in the performance of the dendrometric traits assessed, highlighting significant structural differences among *Neltuma pallida* populations **([Figure 3](?tab=t.ecc2pbe3h01k#bookmark=id.je3l5aw49xmv)).
+To evaluate phenotypic diversity in quantitative traits, variability was analyzed across localities. The results revealed pronounced heterogeneity in the performance of the dendrometric traits assessed, highlighting significant structural differences among *Neltuma pallida* populations ([Figure 3](?tab=t.ecc2pbe3h01k#bookmark=id.je3l5aw49xmv)).
 
 Analysis of diameter at breast height (DBH) showed significant differences among localities (p < 0.001). Fundo Valdez (50.07 cm), Monte Azul (46.62 cm), and KM 190 (45.77 cm) exhibited the highest mean values, indicating individuals with greater stem diameter development. In contrast, ISA REP (15.59 cm) and Rica Playa (16.06 cm) displayed the lowest values, reflecting populations with reduced bole thickness ([Figure 3a](?tab=t.ecc2pbe3h01k#bookmark=id.je3l5aw49xmv)). 
 
@@ -279,7 +279,7 @@ Crown diameter likewise exhibited significant variability across localities (p <
 
 Finally, for height to the first branching, significant differences were observed among localities (p < 0.001). Fundo Valdez (4.08 m), SENASA (3.21 m), and Monte Azul (3.20 m) recorded the greatest branching heights, suggesting trees with cleaner boles. In contrast, ISA REP (1.32 m) and Chanchape (1.71 m) exhibited the lowest values ([Figure 3d](?tab=t.ecc2pbe3h01k#bookmark=id.je3l5aw49xmv)).
 
-# ![Distribution of quantitative morphological traits in *Neltuma pallida* populations evaluated across 13 localities in the departments of Piura and Tumbes. (a) Diameter at breast height (DBH). (b) Total height. (c) Crown diameter. (d) Height to the first branching. Distributions are based on the evaluation of 631 individuals, allowing the characterization of phenotypic variability among localities and providing inputs for germplasm conservation and selection. Different letters indicate statistically significant differences according to Tukey’s multiple comparison test (p < 0.05).](img_2.jpg){#fig:id.je3l5aw49xmv}
+![Distribution of quantitative morphological traits in *Neltuma pallida* populations evaluated across 13 localities in the departments of Piura and Tumbes. (a) Diameter at breast height (DBH). (b) Total height. (c) Crown diameter. (d) Height to the first branching. Distributions are based on the evaluation of 631 individuals, allowing the characterization of phenotypic variability among localities and providing inputs for germplasm conservation and selection. Different letters indicate statistically significant differences according to Tukey’s multiple comparison test (p < 0.05).](img_2.jpg){#fig:id.je3l5aw49xmv}
 
 
 
@@ -293,7 +293,7 @@ Cluster III was formed by the localities Marginal Forest, Pedregal, CC Ignacio T
 
 Cluster IV included the localities INIA, Rica Playa, ISA REP, and SENASA, which grouped individuals with the lowest average values for all evaluated traits. DBH ranged from 15.59 cm (ISA REP) to 23.59 cm (SENASA), total height varied between 4.67 m and 9.80 m, and crown diameter between 6.04 m and 7.66 m. These localities were also characterized by low fruit production, frequent stem defects, sparse or low-quality foliage, and a predominance of bitter-tasting fruits.
 
-# ![Cluster analysis of 13 *Neltuma pallida* localities evaluated in the departments of Piura and Tumbes. Clustering was performed using Euclidean distance as the dissimilarity measure and the Weighted Pair Group Method using Centroids (WPGMC). The optimal number of clusters was determined using the average silhouette coefficient, allowing the identification of locality groups with similar morphological and phenotypic characteristics.](img_3.jpg){#fig:id.yc0capj6bnvr}
+![Cluster analysis of 13 *Neltuma pallida* localities evaluated in the departments of Piura and Tumbes. Clustering was performed using Euclidean distance as the dissimilarity measure and the Weighted Pair Group Method using Centroids (WPGMC). The optimal number of clusters was determined using the average silhouette coefficient, allowing the identification of locality groups with similar morphological and phenotypic characteristics.](img_3.jpg){#fig:id.yc0capj6bnvr}
 
 
 
@@ -342,7 +342,7 @@ The variable biplot showed clear groupings according to their contribution and o
 
 At the individual level, trees from Monte Azul, Samán Chico, and Fundo Valdez clustered in the region associated with higher values of DBH, total height, and crown diameter ([Figure 5b](?tab=t.ecc2pbe3h01k#bookmark=id.59gj1fd1tlfe)). Monte Azul and Samán Chico were further distinguished by high fruit production, very sweet fruit quality, and excellent foliage quality, characterized by leaf coverage over the entirety of branches. In contrast, trees from Rica Playa, ISA REP, and SENASA occupied the opposite quadrant, associated with lower values of tree form and trunk quality ([Figure 5b](?tab=t.ecc2pbe3h01k#bookmark=id.59gj1fd1tlfe)). 
 
-# ![Principal component analysis (PCA) of morphological and phenotypic traits in *Neltuma pallida* populations from Piura and Tumbes. (a) Projection of morphological and phenotypic variables onto the first two principal components, which explain the largest proportion of system variance. (b) Distribution of individuals grouped by locality in the multivariate space defined by the principal components, based on morphological and phenotypic characteristics. The analysis was conducted on 631 individuals (n = 631).](img_4.jpg){#fig:id.59gj1fd1tlfe}
+![Principal component analysis (PCA) of morphological and phenotypic traits in *Neltuma pallida* populations from Piura and Tumbes. (a) Projection of morphological and phenotypic variables onto the first two principal components, which explain the largest proportion of system variance. (b) Distribution of individuals grouped by locality in the multivariate space defined by the principal components, based on morphological and phenotypic characteristics. The analysis was conducted on 631 individuals (n = 631).](img_4.jpg){#fig:id.59gj1fd1tlfe}
 
 Eight trees from the Monte Azul locality in Piura were identified as plus trees. These individuals were distinguished by their high vigor, well-formed boles, strong fruiting capacity, and dense foliage cover. They met all favorable qualitative and quantitative selection criteria and displayed outstanding morpho-phenotypic expression compared with the rest of the population. Their superior attributes included abundant fruit production, vigorous biomass development, and close correspondence with favorable habitat conditions and conservation status.
 
@@ -350,7 +350,7 @@ Quantitatively, the plus trees exhibited the highest values for the evaluated tr
 
 Qualitatively, all plus trees exhibited single stems with no bifurcations. Tree form was classified as dominant single-stemmed, while trunk quality was rated as “good,” meaning free of or with only minimal defects. All plus trees produced abundant fruits, distributed across 50–100% of branches, with fruits consistently rated as sweet to very sweet. Foliage quality was also outstanding, with leaf cover extending over at least two-thirds to the entirety of branches.
 
-# **DISCUSSION**
+# DISCUSSION
 
 *Neltuma pallida*, commonly known as algarrobo, is a key leguminous forest species of northern Peru’s dry forests, adapted to warm climates and arid soils, and recognized for its high ecological, economic, and sociocultural value [[14]](https://www.zotero.org/google-docs/?1tJuL4). However, the species is currently threatened by pests, diseases, and the progressive degradation of its natural ecosystem [[46]](https://www.zotero.org/google-docs/?aBeKNR). In this study, we evaluated the morphological and phenotypic diversity of *N. pallida* across 13 localities with contrasting edaphoclimatic conditions. Our results revealed significant intra- and inter-population polymorphism, reflecting genetic variability among the studied populations. Estimation of heritability coefficients further enabled the identification of traits under stronger genetic control, thus with higher potential for selection. Consequently, a group of individuals with superior phenotypes was identified as ideal candidates for incorporation into a germplasm bank to support future breeding programs aimed at conservation and restoration of this species.
 
@@ -378,7 +378,7 @@ In this study, plus tree identification was based on individual assessment, allo
 
 Despite progress in identifying superior *N. pallida* individuals, questions remain regarding whether the highlighted traits reflect true genetic potential or are mainly influenced by local edaphoclimatic conditions. Soil fertility heterogeneity, salinity levels, and nutrient availability likely conditioned phenotypic expression, raising the risk of overestimating individuals favored by environmental plasticity rather than genetic superiority. Future studies should complement morpho-phenotypic selection with molecular marker analyses and progeny testing to more precisely disentangle environmental effects. Integrating these approaches will strengthen breeding programs and ensure that selected individuals not only express desirable traits under specific site conditions but also maintain adaptive advantages - such as abiotic stress tolerance and growth potential - across diverse ecological scenarios.
 
-# **CONCLUSIONS**
+# CONCLUSIONS
 
 The morpho-phenotypic characterization of *Neltuma pallida* in the regions of Piura and Tumbes revealed substantial intra- and inter-population variability, reflected in the high degree of polymorphism observed. Edaphoclimatic differences among localities influenced the expression of evaluated traits, while heritability estimates enabled the identification of characters with greater potential response to selection. These findings led to the identification of eight superior individuals classified as plus trees, providing a foundation for the establishment of germplasm banks and the development of genetic improvement programs aimed at the conservation and ecological restoration of this species within tropical dry forest ecosystems.
 
@@ -498,7 +498,7 @@ The authors declare no conflict of interest.
 
 [44. ](https://www.zotero.org/google-docs/?WXr7jy)	[Lozano-Isla, F. Inti: Tools and Statistical Procedures in Plant Science. **2025**, doi:10.32614/CRAN.package.inti. ](https://www.zotero.org/google-docs/?WXr7jy)
 
-[45. ](https://www.zotero.org/google-docs/?WXr7jy)	[Bates, D.; Maechler, M.; Bolker  [aut, B.; cre; Walker, S.; Christensen, R.H.B.; Singmann, H.; Dai, B.; Scheipl, F.; Grothendieck, G.; et al. Lme4: Linear Mixed-Effects Models Using “Eigen” and S4. **2025**, doi:10.32614/CRAN.package.lme4. ](https://www.zotero.org/google-docs/?WXr7jy)
+[45. ](https://www.zotero.org/google-docs/?WXr7jy)	[Bates, D.; Maechler, M.; Bolker, B.; Walker, S.; Christensen, R.H.B.; Singmann, H.; Dai, B.; Scheipl, F.; Grothendieck, G.; Green, P.; et al. Lme4: Linear Mixed-Effects Models Using “Eigen” and S4. **2025**, doi:10.32614/CRAN.package.lme4. ](https://www.zotero.org/google-docs/?WXr7jy)
 
 [46. ](https://www.zotero.org/google-docs/?WXr7jy)	[Caycho, E.; La Torre, R.; Orjeda, G. Assembly, Annotation and Analysis of the Chloroplast Genome of the Algarrobo Tree *Neltuma Pallida* (Subfamily: Caesalpinioideae). *BMC Plant Biol* **2023**, *23*, 570, doi:10.1186/s12870-023-04581-5. ](https://www.zotero.org/google-docs/?WXr7jy)
 
