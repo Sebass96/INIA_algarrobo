@@ -1,5 +1,5 @@
 ---
-title: "Morpho-phenotypic evaluation of algarrobo (Neltuma pallida) for the identification of superior individuals in dry forest ecosystems"
+title: "Diversity and selection of superior algarrobos (_Neltuma pallida_) phenotypes in the natural dry forests of Peru for sustainable conservation and genetic improvement"
 format:
   html:
     toc: true
@@ -41,7 +41,7 @@ session_info()
 
 # Import data
 
-The data were imported from the field book of the biological, dasometric, and phytosanitary evaluation of mesquite trees to identify the main pests and diseases associated with the genus *Neltuma*.
+The data were obtained from the field records of the biological and dasometric evaluation of _Neltuma pallida_ populations, used to support the identification and characterization of superior phenotypes.
 
 ```{r}
 url <- "https://docs.google.com/spreadsheets/d/19zJF9ti9AQhOCTenP6UqL0jA8Anl1s0r0ld-xzrR-PY/edit?gid=1347114226#gid=1347114226"
