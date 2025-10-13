@@ -757,7 +757,7 @@ rslt <- 1:length(mgroup) %>% map(\(a) {
     cat("\n#>", trait)
 
     gpop %>%
-      H2cal(
+      inti::H2cal(
         data = .,
         trait = trait,
         gen.name = "locality",
