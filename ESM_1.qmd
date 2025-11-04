@@ -697,24 +697,25 @@ fig
 
 ```{r}
 # Guardar temporalmente el heatmap como HTML
-saveWidget(fig, "heatmap_temp.html", selfcontained = TRUE)
+htmlwidgets::saveWidget(fig, "heatmap_temp.html", selfcontained = TRUE)
 
 # Exportar como imagen PNG (o PDF)
-webshot("heatmap_temp.html", file = "submission/Figure_4.jpg", vwidth = 1000, vheight = 800)
+webshot::webshot("heatmap_temp.html", file = "submission/Figure_4.jpg", vwidth = 1000, vheight = 800)
 ```
 
-# Broad-sense heritability
+# Assess Population Differentiation in Phenotypic Traits
 
 ```{r}
-data_variables %>% names()
-data_variables %>% str()
+library(Pstat)
 
-h2d <- data_variables %>%
-  dplyr::select(1:"Foliage quality") %>%
-  mutate(across(1:Basin, ~ as.factor(.))) %>%
+set.seed(2025)
+
+pstd <- data_variables %>%
+  dplyr::select(Locality, DBH:"Foliage quality") %>% 
+  mutate(across(Locality, ~ as.factor(.))) %>%
   mutate(across(DBH:length(.), ~ as.numeric(.))) %>%
-  rename_with(~ tolower(.)) %>% # poner en minusculas
-  rename_with(~ iconv(x = ., to = "ASCII//TRANSLIT")) %>% # quitar todos las letras extrañas
+  rename_with(~ tolower(.)) %>%
+  rename_with(~ iconv(x = ., to = "ASCII//TRANSLIT")) %>% 
   rename(
     crown_diameter = `crown diameter`,
     branch_height = `branch height`,
@@ -726,91 +727,23 @@ h2d <- data_variables %>%
     foliage_quality = `foliage quality`,
   )
 
-str(h2d)
+names(pstd)
 
-names(h2d)
+pstd %>% 
+  AitTrans() %>% 
+  TracePst(data = .
+           , Fst = 0.03
+           , ci = 1
+           , boot = 1000
+           , xm = 3
+           )
 
-group <- "departament"
-
-mgroup <- h2d %>%
-  dplyr::select({{ group }}) %>%
-  unique() %>%
-  deframe() %>%
-  as.vector()
-
-rslt <- 1:length(mgroup) %>% map(\(a) {
-  npop <- mgroup[a]
-
-  cat("\n#>", npop)
-
-  gpop <- h2d %>%
-    filter(.[[group]] %in% {{ npop }}) %>%
-    dplyr::select(!c(fruit_quality, foliage_quality)) # al parecer no tiene variabilidad
-
-  # str(gpop)
-
-  nvar <- match("dbh", names(gpop))
-
-  groups <- nvar:length(gpop) %>% map(\(b) {
-    trait <- names(gpop)[b]
-
-    cat("\n#>", trait)
-
-    gpop %>%
-      inti::H2cal(
-        data = .,
-        trait = trait,
-        gen.name = "locality",
-        rep.n = 8 # maximo valor de n localidades
-        , fixed.model = "0 + (1|province) + locality",
-        random.model = "1 + (1|province) + (1|locality)",
-        emmeans = FALSE,
-        plot_diag = TRUE,
-        outliers.rm = TRUE,
-        trial = npop
+pstd %>% 
+  AitTrans() %>% 
+  Pst(ci = 1
+      , csh = 1 # calculado anteriormente
+      , boot = 1000
       )
-  })
-})
-
-h2tab <- 1:length(rslt) %>%
-  map(\(x) {
-    nlst <- rslt[[x]]
-
-    1:length(nlst) %>% map(\(z) {
-      rslt[[x]][[z]][["tabsmr"]]
-    })
-  }) %>%
-  bind_rows() %>%
-  rename(Trait = trait, Heritability = H2.s, Population = trial, Localities = geno) %>%
-  dplyr::select(!matches("H2|rep|env|year")) %>%
-  mutate(vg_vg = round(V.g / V.g, 1)) %>%
-  mutate(ve_vg = round(V.e / V.g, 1)) %>%
-  mutate(vp_vg = round(V.p / V.g, 1)) %>%
-  unite("Ratio", c(vg_vg, vp_vg, ve_vg), sep = ":") %>%
-  mutate(across(where(is.numeric), ~ round(., 2)))
-
-
-h2tab %>% kable(caption = "Variance component table")
-
-
-h2blues <- 1:length(rslt) %>%
-  map(\(x) {
-    nlst <- rslt[[x]]
-
-    1:length(nlst) %>% map(\(z) {
-      rslt[[x]][[z]][["blues"]] %>%
-        dplyr::select(!smith.w) %>%
-        pivot_longer(!c(trial, locality), names_to = "trait")
-    })
-  }) %>%
-  bind_rows() %>%
-  ungroup() %>%
-  group_by(trait) %>%
-  arrange(desc(value), .by_group = T)
-
-h2blues %>% kable(caption = "BLUEs")
-
-# h2tab %>% write_sheet(ss = gs, sheet = "h2tab")
 ```
 
 # Plus tree selection
@@ -855,7 +788,7 @@ f5b <- fviz_pca_ind(pca,
 )
 ```
 
-## Figure 5
+## Figure 6
 
 Principal Component Analysis (PCA). Results of the contributions and correlation of the variables in the Principal Component Analysis (PCA).
 
@@ -868,16 +801,16 @@ fig <- list(f5a, f5b) %>%
   )
 fig %>%
   ggsave2(
-    plot = ., "submission/Figure_5.jpg", units = "cm",
+    plot = ., "submission/Figure_6.jpg", units = "cm",
     width = 28,
     height = 12
   )
 fig %>%
   ggsave2(
-    plot = ., "submission/Figure_5.eps", units = "cm",
+    plot = ., "submission/Figure_6.eps", units = "cm",
     width = 28,
     height = 12
   )
 
-knitr::include_graphics("submission/Figure_5.jpg")
+knitr::include_graphics("submission/Figure_6.jpg")
 ```

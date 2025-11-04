@@ -1,0 +1,817 @@
+---
+title: "Diversity and selection of superior algarrobos (_Neltuma pallida_) phenotypes in the natural dry forests of Peru for sustainable conservation and genetic improvement"
+format:
+  html:
+    toc: true
+    toc-location: left
+    number-sections: true
+    self-contained: true
+    output-file: "ESM_1"
+editor_options: 
+  chunk_output_type: console
+execute: 
+  warning: false
+  echo: true
+---
+
+# Project Setup
+
+```{r}
+#| label:  setup
+library(corrplot)
+library(heatmaply)
+library(multcomp)
+library(factoextra)
+library(corrplot)
+library(gridGraphics)
+library(dplyr)
+library(textshape)
+library(googlesheets4)
+library(cluster)
+library(vegan)
+library(webshot2)
+library(htmlwidgets)
+library(FactoMineR)
+source("https://inkaverse.com/setup.r")
+
+set.seed(2025)
+cat("Project: ", getwd(), "\n")
+session_info()
+```
+
+# Import data
+
+The data were obtained from the field records of the biological and dasometric evaluation of _Neltuma pallida_ populations, used to support the identification and characterization of superior phenotypes.
+
+```{r}
+url <- "https://docs.google.com/spreadsheets/d/19zJF9ti9AQhOCTenP6UqL0jA8Anl1s0r0ld-xzrR-PY/edit?gid=1347114226#gid=1347114226"
+
+gs <- url %>%
+  as_sheets_id()
+
+datos <- gs %>%
+  range_read("total") %>%
+  mutate(
+    Forma_arbol_descripcion = case_when(
+      Forma_arbol == 3 ~ "Single-stemmed trees",
+      Forma_arbol == 2 ~ "Intermediate trees",
+      Forma_arbol == 1 ~ "Multi-stemmed trees",
+      TRUE ~ NA_character_
+    ),
+    Calidad_tronco_descripcion = case_when(
+      Calidad_tronco == 3 ~ "High-quality tree, free of defects or with minimal defects",
+      Calidad_tronco == 2 ~ "Moderate-quality tree with defects",
+      Calidad_tronco == 1 ~ "Poor-quality tree with significant defects",
+      TRUE ~ NA_character_
+    ),
+    Produccion_frutos_descripcion = case_when(
+      Produccion_frutos == 4 ~ "Trees bearing fruit on 100% of branches",
+      Produccion_frutos == 3 ~ "Trees bearing fruit on up to 75% of branches",
+      Produccion_frutos == 2 ~ "Trees bearing fruit on up to 50% of branches",
+      Produccion_frutos == 1 ~ "Trees bearing fruit on up to 25% of branches",
+      Produccion_frutos == 0 ~ "Trees without fruit",
+      TRUE ~ NA_character_
+    ),
+    Calidad_frutos_descripcion = case_when(
+      Calidad_frutos == 3 ~ "Trees with very sweet fruit",
+      Calidad_frutos == 2 ~ "Trees with sweet fruit",
+      Calidad_frutos == 1 ~ "Trees with bitter fruit",
+      Calidad_frutos == 0 ~ "Trees with very bitter fruit",
+      TRUE ~ NA_character_
+    ),
+    Calidad_follaje_descripcion = case_when(
+      Calidad_follaje == 3 ~ "Trees with foliage on all branches",
+      Calidad_follaje == 2 ~ "Trees with foliage on up to two-thirds of branches",
+      Calidad_follaje == 1 ~ "Trees with foliage on up to one-third of branches",
+      TRUE ~ NA_character_
+    ),
+    Bifurcacion_descripcion = case_when(
+      Bifurcacion == 3 ~ "No evidence of bifurcation",
+      Bifurcacion == 2 ~ "Forked at breast height (DBH)",
+      Bifurcacion == 1 ~ "Presence of bifurcation below breast height (DBH)",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  select(
+    Individuo, Depart, Provincia, Distrito, Localidad, Estación, Cuenca,
+    DAP, Diam_copa, Altura_ram, Altura_total, Num_ramas_XX,
+    Forma_arbol, Forma_arbol_descripcion,
+    Calidad_tronco, Calidad_tronco_descripcion,
+    Produccion_frutos, Produccion_frutos_descripcion,
+    Calidad_frutos, Calidad_frutos_descripcion,
+    Calidad_follaje, Calidad_follaje_descripcion,
+    Bifurcacion, Bifurcacion_descripcion,
+    `fito_IIhEd _k`:Parasitos_XX, Carbonatos:Suelo
+  ) %>%
+  mutate(
+    across(c(Individuo, Depart, Provincia, Distrito, Localidad, Estación, Cuenca), as.factor),
+    across(c(Forma_arbol:Parasitos_XX, Suelo), as.factor)
+  ) %>%
+  rename(
+    Individual = Individuo,
+    Departament = Depart,
+    Province = Provincia,
+    District = Distrito,
+    Locality = Localidad,
+    Station = Estación,
+    Basin = Cuenca,
+    DBH = DAP,
+    `Forking` = Bifurcacion,
+    `Crown diameter` = Diam_copa,
+    `Branch height` = Altura_ram,
+    `Total height` = Altura_total,
+    `Number of branches` = Num_ramas_XX,
+    `Tree form` = Forma_arbol,
+    `Tree form description` = Forma_arbol_descripcion,
+    `Trunk quality` = Calidad_tronco,
+    `Trunk quality description` = Calidad_tronco_descripcion,
+    `Fruit production` = Produccion_frutos,
+    `Fruit production description` = Produccion_frutos_descripcion,
+    `Fruit quality` = Calidad_frutos,
+    `Fruit quality description` = Calidad_frutos_descripcion,
+    `Foliage quality` = Calidad_follaje,
+    `Foliage quality description` = Calidad_follaje_descripcion,
+    `Forking description` = Bifurcacion_descripcion
+  )
+
+names(datos)
+
+str(datos)
+
+summary(datos)
+
+data_variables <- datos %>%
+  select(
+    Individual, Departament, Province, District, Locality, Station, Basin,
+    DBH:`Total height`,
+    `Tree form`,
+    `Trunk quality`,
+    `Fruit production`,
+    `Fruit quality`,
+    `Foliage quality`,
+    Forking,
+    `fito_IIhEd _k`:Parasitos_XX,
+    Carbonatos:pH
+  )
+
+str(data_variables)
+
+data_coordenadas <- gs %>%
+  range_read("total") %>%
+  select(
+    Individuo,
+    Departamento = "Depart", Provincia,
+    Distrito, Localidad, Estación, Cuenca, UTM_X, UTM_Y, UTM_E_suelo,
+    UTM_N_suelo
+  )
+
+str(data_coordenadas)
+
+data_clima <- gs %>%
+  range_read("clima")
+
+str(data_clima)
+```
+
+```{r}
+datos %>% kable(caption = "Evaluation of mesquite trees", align = "c")
+
+data_coordenadas %>% kable(caption = "Location of mesquite trees", align = "c")
+```
+
+# Edaphoclimatic analysis
+
+## Principal Component Analysis (PCA)
+
+Principal Component Analysis (PCA). Results of the contributions and correlation of the variables in the Principal Component Analysis (PCA).
+
+```{r}
+mv <- data_variables %>%
+  group_by(Locality) %>%
+  summarise(across(Carbonatos:pH, ~ mean(.x, na.rm = TRUE))) %>%
+  rename(
+    CaCO3 = Carbonatos,
+    EC = CE,
+    P = Fosforo,
+    OM = Mat_Org,
+    N = Nitrogeno,
+    K = Potasio
+  )
+
+mv <- left_join(mv, data_clima, by = "Locality")
+
+mv <- as.data.frame(mv)
+
+## Estadisticas descriptivas
+
+descriptivas <- mv %>%
+  select(-Locality) %>%
+  summarise(
+    across(
+      everything(),
+      list(
+        Minimun = ~ round(min(., na.rm = TRUE), 2),
+        Maximun = ~ round(max(., na.rm = TRUE), 2),
+        Mean = ~ round(mean(., na.rm = TRUE), 2),
+        Deviation = ~ round(sd(., na.rm = TRUE), 2)
+      ),
+      .names = "{.col}_{.fn}"
+    )
+  ) %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = c("Variable", "Estadistico"),
+    names_sep = "_",
+    values_to = "Valor"
+  ) %>%
+  pivot_wider(names_from = Estadistico, values_from = Valor)
+
+## PCA
+
+rownames(mv) <- mv$Locality
+
+head(mv)
+
+pca <- mv %>%
+  PCA(scale.unit = T, quali.sup = 1, graph = F)
+
+rownames(pca$ind$coord)
+
+# summary
+
+summary(pca, nbelements = Inf, nb.dec = 2)
+
+grupos_var <- c(
+  rep("Edaphics", 7),
+  rep("Climatics", 7),
+  rep("Physiographics", 3)
+)
+
+pt <- fviz_pca_biplot(pca,
+  label = c("ind", "var"),
+  labelsize = 3,
+  col.var = grupos_var,
+  col.ind = "black",
+  palette = c(
+    "Edaphics" = "#C69C6D",
+    "Climatics" = "steelblue",
+    "Physiographics" = "forestgreen"
+  ),
+  legend.title = "Variables type",
+  geom.var = c("arrow", "text"),
+  repel = TRUE,
+  addEllipses = FALSE
+) +
+  theme_minimal(base_size = 11) +
+  theme(
+    legend.position = "bottom",
+    panel.border = element_rect(color = "gray80", fill = NA, size = 0.7),
+    panel.grid = element_line(color = "gray90")
+  )
+
+pt
+```
+
+## Figure 2
+
+Principal Component Analysis (PCA). Results of the contributions and correlation of the variables in the Principal Component Analysis (PCA).
+
+```{r}
+pt %>%
+  ggsave2(plot = ., "submission/Figure_2.jpg", height = 8, width = 10, units = "in", dpi = 300)
+
+pt %>%
+  ggsave2(plot = ., "submission/Figure_2.eps", height = 8, width = 10, units = "in", dpi = 600)
+
+knitr::include_graphics("submission/Figure_2.jpg")
+```
+
+# Shannon–Weaver diversity index (H′)
+
+```{r}
+h <- datos %>%
+  select(
+    "Tree form description", "Trunk quality description",
+    "Fruit production description",
+    "Fruit quality description",
+    "Foliage quality description",
+    "Forking description"
+  )
+
+variables <- c(
+  "Tree form description", "Trunk quality description",
+  "Fruit production description",
+  "Fruit quality description",
+  "Foliage quality description",
+  "Forking description"
+)
+
+# Crear lista vacía para guardar resultados
+resultados <- list()
+
+for (var in variables) {
+  # Tabla de frecuencia
+  freq_table <- as.data.frame(table(datos[[var]]))
+  colnames(freq_table) <- c("State", "Frequency")
+
+  # Calcular proporción
+  freq_table$Proportion <- round((freq_table$Frequency / sum(freq_table$Frequency)) * 100, 2)
+
+  # Índice de Shannon
+  H <- diversity(freq_table$Frequency, index = "shannon")
+
+  # Añadir variable y valor del índice a la tabla
+  freq_table <- freq_table %>%
+    mutate(
+      Qualitative_trait = var,
+      Shannon_Weaver_index = round(H, 2)
+    ) %>%
+    select(Qualitative_trait, Shannon_Weaver_index, everything())
+
+  # Guardar
+  resultados[[var]] <- freq_table
+}
+
+# Unir todo en una sola tabla
+tabla_shannon <- bind_rows(resultados)
+
+tabla_shannon %>% kable(align = "c")
+```
+
+# Traits distribution by population
+
+```{r}
+data_dist <- data_variables %>%
+  select(-Individual:-District, -Station:-Basin, -`fito_IIhEd _k`:-Parasitos_XX, -Carbonatos:-pH)
+
+# Pivotear datos
+
+data_long <- data_dist %>%
+  pivot_longer(
+    cols = c(DBH, "Crown diameter", "Branch height", "Total height"),
+    names_to = "Variable",
+    values_to = "Valor"
+  )
+```
+
+## "DBH"
+
+```{r}
+trait <- "DBH"
+
+lmm <- paste({{ trait }}, "~ Locality") %>% as.formula()
+
+plot_diagnostic(data_dist, formula = lmm) %>%
+  plot_grid(plotlist = ., ncol = 2)
+
+model <- data_dist %>%
+  lm(formula = lmm, .)
+
+anova(model)
+
+mc <- emmeans(model, ~Locality) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  rename(sig = ".group")
+
+mc %>% kable()
+
+# Calcular el valor máximo (upper whisker) por grupo
+
+positions <- data_dist %>%
+  group_by(Locality) %>%
+  summarise(y_pos = max(DBH, na.rm = TRUE) + 5, .groups = "drop")
+
+# Combinar con las letras del objeto mc
+
+mc_pos <- left_join(mc, positions, by = "Locality")
+
+p1 <- data_long %>%
+  filter(Variable == "DBH") %>%
+  ggplot(aes(x = Locality, y = Valor, fill = Locality)) +
+  stat_boxplot(geom = "errorbar", width = 0.5, position = position_dodge(0.8)) +
+  geom_boxplot(width = 0.5, position = position_dodge(0.8)) +
+  geom_jitter(
+    position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
+    shape = 21, size = 1.8, alpha = 0.6, color = "black"
+  ) +
+  geom_text(
+    data = mc_pos,
+    aes(x = factor(Locality), y = y_pos, label = sig),
+    position = position_dodge(width = 0.8),
+    size = 4,
+    inherit.aes = FALSE
+  ) +
+  theme_minimal() +
+  theme(
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 0.5),
+    panel.background = element_blank()
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  ) +
+  labs(x = "", y = "DBH (cm)") +
+  scale_y_continuous(limits = c(0, 160))
+
+p1
+```
+
+## Crown diameter
+
+```{r}
+trait <- "`Crown diameter`"
+
+lmm <- paste({{ trait }}, "~ Locality") %>% as.formula()
+
+plot_diagnostic(data_dist, formula = lmm) %>%
+  plot_grid(plotlist = ., ncol = 2)
+
+model <- data_dist %>%
+  lm(formula = lmm, .)
+
+anova(model)
+
+mc <- emmeans(model, ~Locality) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  rename(sig = ".group")
+
+mc %>% kable()
+
+# Calcular el valor máximo (upper whisker) por grupo
+
+positions <- data_dist %>%
+  group_by(Locality) %>%
+  summarise(y_pos = max(`Crown diameter`, na.rm = TRUE) + 2, .groups = "drop")
+
+# Combinar con las letras del objeto mc
+
+mc_pos <- left_join(mc, positions, by = "Locality")
+
+p2 <- data_long %>%
+  filter(Variable == "Crown diameter") %>%
+  ggplot(aes(x = Locality, y = Valor, fill = Locality)) +
+  stat_boxplot(geom = "errorbar", width = 0.5, position = position_dodge(0.8)) +
+  geom_boxplot(width = 0.5, position = position_dodge(0.8)) +
+  geom_jitter(
+    position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
+    shape = 21, size = 1.8, alpha = 0.6, color = "black"
+  ) +
+  geom_text(
+    data = mc_pos,
+    aes(x = factor(Locality), y = y_pos, label = sig),
+    position = position_dodge(width = 0.8),
+    size = 4,
+    inherit.aes = FALSE
+  ) +
+  theme_minimal() +
+  theme(
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 0.5),
+    panel.background = element_blank()
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  ) +
+  labs(x = "", y = "Crown diameter (m)")
+
+p2
+```
+
+## Branch height
+
+```{r}
+trait <- "`Branch height`"
+
+lmm <- paste({{ trait }}, "~ Locality") %>% as.formula()
+
+plot_diagnostic(data_dist, formula = lmm) %>%
+  plot_grid(plotlist = ., ncol = 2)
+
+model <- data_dist %>%
+  lm(formula = lmm, .)
+
+anova(model)
+
+mc <- emmeans(model, ~Locality) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  rename(sig = ".group")
+
+mc %>% kable()
+
+# Calcular el valor máximo (upper whisker) por grupo
+
+positions <- data_dist %>%
+  group_by(Locality) %>%
+  summarise(y_pos = max(`Branch height`, na.rm = TRUE) + 0.5, .groups = "drop")
+
+# Combinar con las letras del objeto mc
+
+mc_pos <- left_join(mc, positions, by = "Locality")
+
+p3 <- data_long %>%
+  filter(Variable == "Branch height") %>%
+  ggplot(aes(x = Locality, y = Valor, fill = Locality)) +
+  stat_boxplot(geom = "errorbar", width = 0.5, position = position_dodge(0.8)) +
+  geom_boxplot(width = 0.5, position = position_dodge(0.8)) +
+  geom_jitter(
+    position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
+    shape = 21, size = 1.8, alpha = 0.6, color = "black"
+  ) +
+  geom_text(
+    data = mc_pos,
+    aes(x = factor(Locality), y = y_pos, label = sig),
+    position = position_dodge(width = 0.8),
+    size = 4,
+    inherit.aes = FALSE
+  ) +
+  theme_minimal() +
+  theme(
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 0.5),
+    panel.background = element_blank()
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  ) +
+  labs(x = "", y = "Branch height (m)")
+
+p3
+```
+
+## Total height
+
+```{r}
+trait <- "`Total height`"
+
+lmm <- paste({{ trait }}, "~ Locality") %>% as.formula()
+
+plot_diagnostic(data_dist, formula = lmm) %>%
+  plot_grid(plotlist = ., ncol = 2)
+
+model <- data_dist %>%
+  lm(formula = lmm, .)
+
+anova(model)
+
+mc <- emmeans(model, ~Locality) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  rename(sig = ".group")
+
+mc %>% kable()
+
+# Calcular el valor máximo (upper whisker) por grupo
+
+positions <- data_dist %>%
+  group_by(Locality) %>%
+  summarise(y_pos = max(`Total height`, na.rm = TRUE) + 1, .groups = "drop")
+
+# Combinar con las letras del objeto mc
+
+mc_pos <- left_join(mc, positions, by = "Locality")
+
+p4 <- data_long %>%
+  filter(Variable == "Total height") %>%
+  ggplot(aes(x = Locality, y = Valor, fill = Locality)) +
+  stat_boxplot(geom = "errorbar", width = 0.5, position = position_dodge(0.8)) +
+  geom_boxplot(width = 0.5, position = position_dodge(0.8)) +
+  geom_jitter(
+    position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
+    shape = 21, size = 1.8, alpha = 0.6, color = "black"
+  ) +
+  geom_text(
+    data = mc_pos,
+    aes(x = factor(Locality), y = y_pos, label = sig),
+    position = position_dodge(width = 0.8),
+    size = 4,
+    inherit.aes = FALSE
+  ) +
+  theme_minimal() +
+  theme(
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 0.5),
+    panel.background = element_blank()
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  ) +
+  labs(x = "", y = "Total height (m)") +
+  scale_y_continuous(limits = c(0, 30))
+
+p4
+```
+
+## Figure 3
+
+```{r}
+fig <- list(
+  p1 + labs(x = NULL) + theme(
+    legend.position = "none",
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  ),
+  p4 + labs(x = NULL) + theme(
+    legend.position = "none",
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  ),
+  p2 + theme(legend.position = "none"),
+  p3 + theme(legend.position = "none")
+) %>%
+  plot_grid(
+    plotlist = ., ncol = 2,
+    labels = "auto",
+    align = "v", rel_heights = c(1, 1.1)
+  )
+
+fig %>%
+  ggsave2(
+    plot = ., "submission/Figure_3.jpg", units = "cm",
+    width = 30, height = 26
+  )
+
+fig %>%
+  ggsave2(
+    plot = ., "submission/Figure_3.eps", units = "cm",
+    width = 30, height = 26
+  )
+
+knitr::include_graphics("submission/Figure_3.jpg")
+```
+
+# Cluster Analysis
+
+```{r}
+mv <- data_variables %>%
+  mutate(across(`Tree form`:Parasitos_XX, as.numeric)) %>%
+  group_by(Locality) %>%
+  select(
+    -`fito_IIhEd _k`:-Parasitos_XX,
+    -`Branch height`, -Forking, -Basin, -Station,
+    -Individual:-Locality,
+    -Carbonatos:-pH
+  ) %>%
+  summarise(across(where(is.numeric), mean, na.rm = TRUE))
+
+str(data_variables)
+
+mv1 <- mv %>%
+  textshape::column_to_rownames(., loc = 1)
+
+mv1 <- as.matrix(mv1)
+
+fviz_nbclust(mv1, pam, method = "silhouette")
+
+pm <- pam(mv1, 4)
+
+fig <- heatmaply(
+  mv1,
+  hclust_method = "median",
+  scale = "column",
+  k_row = 4, # número de clusters para filas (localidades)
+  # k_col = 2,  # número de clusters para columnas (variables),
+  colors = colorRampPalette(c("red", "yellow", "green"))(256),
+  xlab = "Response variables",
+  ylab = "Localities",
+  grid_color = "#8C8C8C",
+  grid_width = 0.00001,
+  branches_lwd = 0.5,
+  fontsize_row = 8,
+  fontsize_col = 8,
+  margins = c(60, 100),
+  labRow = rownames(mv1),
+  labCol = colnames(mv1),
+  dendrogram = "row",
+  key.title = "Color Key"
+)
+
+fig
+```
+
+## Figure 4
+
+```{r}
+# Guardar temporalmente el heatmap como HTML
+htmlwidgets::saveWidget(fig, "heatmap_temp.html", selfcontained = TRUE)
+
+# Exportar como imagen PNG (o PDF)
+webshot::webshot("heatmap_temp.html", file = "submission/Figure_4.jpg", vwidth = 1000, vheight = 800)
+```
+
+# Assess Population Differentiation in Phenotypic Traits
+
+```{r}
+library(Pstat)
+
+set.seed(2025)
+
+pstd <- data_variables %>%
+  dplyr::select(Locality, DBH:"Foliage quality") %>% 
+  mutate(across(Locality, ~ as.factor(.))) %>%
+  mutate(across(DBH:length(.), ~ as.numeric(.))) %>%
+  rename_with(~ tolower(.)) %>%
+  rename_with(~ iconv(x = ., to = "ASCII//TRANSLIT")) %>% 
+  rename(
+    crown_diameter = `crown diameter`,
+    branch_height = `branch height`,
+    total_height = `total height`,
+    tree_form = `tree form`,
+    trunk_quality = `trunk quality`,
+    fruit_production = `fruit production`,
+    fruit_quality = `fruit quality`,
+    foliage_quality = `foliage quality`,
+  )
+
+names(pstd)
+
+pstd %>% 
+  AitTrans() %>% 
+  TracePst(data = .
+           , Fst = 0.03
+           , ci = 1
+           , boot = 1000
+           , xm = 3
+           )
+
+pstd %>% 
+  AitTrans() %>% 
+  Pst(ci = 1
+      , csh = 1 # calculado anteriormente
+      , boot = 100
+      )
+```
+
+# Plus tree selection
+
+## Principal Component Analysis (PCA)
+
+Principal Component Analysis (PCA). Results of the contributions and correlation of the variables in the Principal Component Analysis (PCA).
+
+```{r}
+mv <- data_variables %>%
+  mutate(across(`Tree form`:Parasitos_XX, as.numeric)) %>% 
+  select(Locality:`Forking`) %>%
+  select(-`Forking`, -`Branch height`, -Station,-Basin)
+
+str(mv)
+
+## PCA
+
+pca <- mv %>%
+  PCA(scale.unit = T, quali.sup = 1, graph = F)
+
+# summary
+
+summary(pca, nbelements = Inf, nb.dec = 2)
+
+f5a <- fviz_pca_var(pca,
+  # col.var = "contrib", # Color by contributions to the PC
+  # gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+  title = "PCA graph of variables",
+  repel = TRUE, # Avoid text overlapping
+)
+
+grupo <- as.factor(datos$Locality)
+
+f5b <- fviz_pca_ind(pca,
+  axes = c(1, 2),
+  col.ind = grupo,
+  legend.title = "Stations",
+  geom.ind = "point",
+  title = "PCA graph of individuals",
+  repel = FALSE
+)
+```
+
+## Figure 5
+
+Principal Component Analysis (PCA). Results of the contributions and correlation of the variables in the Principal Component Analysis (PCA).
+
+```{r}
+fig <- list(f5a, f5b) %>%
+  plot_grid(
+    plotlist = ., ncol = 2, nrow = 1,
+    labels = "auto",
+    rel_widths = c(1.1, 1.5)
+  )
+fig %>%
+  ggsave2(
+    plot = ., "submission/Figure_5.jpg", units = "cm",
+    width = 28,
+    height = 12
+  )
+fig %>%
+  ggsave2(
+    plot = ., "submission/Figure_5.eps", units = "cm",
+    width = 28,
+    height = 12
+  )
+
+knitr::include_graphics("submission/Figure_5.jpg")
+```
+
