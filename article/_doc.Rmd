@@ -2,7 +2,7 @@
 
 Sebastian Casas-Niño^1,2\*^; Juan Rodrigo Baselly-Villanueva^4^; Evelin Judith Salazar-Hinostroza^4^; Sheyla Yanett Chumbimune-Vivanco^4^; William Naurai^5^; Nery Tirabante Terrones^6^; Max Ramirez Rojas^1^; Flavio Lozano-Isla^1,7\*^.
 
-*^1^ Dirección de Supervisión y Monitoreo en las Estaciones Experimentales - Estación Experimental Agraria El Chira, Instituto Nacional de Innovación Agraria (INIA), Piura 20120, Perú.*
+*^1^ Dirección de Servicios Estratégicos Agrarios - Estación Experimental Agraria El Chira, Instituto Nacional de Innovación Agraria (INIA), Piura 20120, Perú.*
 
 *^2^ Universidad Nacional Agraria La Molina (UNALM), Lima, Perú.*
 
@@ -198,19 +198,36 @@ Younger trees were not considered, as their development is strongly influenced b
 
 
 
-## Heritability
+## Assess population differentiation in Phenotypic traits
 
-Broad-sense heritability (H²) and the variance components of phenotypic variation were estimated for *Neltuma pallida* populations according to the Cullis [[31]](https://www.zotero.org/google-docs/?LiwDLd) approach. Where a linear mixed model was implemented proposed by [[32]](https://www.zotero.org/google-docs/?vrx5Q0). To calculate the Best Linear Unbiased Estimators (BLUEs) a linear mixed model was implemented including locality as fixed effects, which is appropriate for hierarchical structures and unbalanced data [[33]](https://www.zotero.org/google-docs/?LcACAD). The model implemented was the following (Supplementary File 1):
+The phenotypic differentiation among the 13 populations of *Neltuma pallida* by estimating the phenotypic divergence index $P_{ST}$​, an analogue of the quantitative genetic differentiation index $Q_{ST}$​. The methodological framework followed Brommer (2011) and was implemented in the R environment using the **Pstat** package (Blondeau Da Silva & Da Silva, 2018), which allows the estimation of $P_{ST}$​, the exploration of its sensitivity to the ratio $c/h^2$, and its comparison with the neutral genetic differentiation index $F_{ST}$​.
 
-Random model: $$y_{ijk} = \mu + (1 | \text{province}_k) + (1 | \text{locality}_j) + \varepsilon_{ijk}$$
+Prior to statistical analysis, all phenotypic variables were normalized to remove size-related effects through the **Aitchison log-ratio transformation** (Aitchison, 1986), which maintains the dimensionality of the dataset and ensures comparability among individuals and populations. For each individual iii and trait jjj, the transformation was expressed as:
 
-Fixed model: $$y_{ijk}=\mu+(1|\text{province}_k)+\text{locality}_j+\varepsilon_{ijk}$$
+$$Y_{ij} = \log(y_{ij}) - \frac{1}{p} \sum_{k=1}^{p} \log(y_{ik})$$
 
-Where $y_{ijk}$ represents the observation of trait $i$ in locality $j$ and province $k$, and $\varepsilon_{ijk}$ is the residual error term. The number of replicates was set at eight, corresponding to the maximum number of evaluated localities. To evaluate the balance between genetic signal and environmental noise in the locations we used the ratio index normalized with respect to (V.g):
+where $y_{ij}$ is the original measurement of the $j^{th}$ trait, $p$ is the total number of traits, and $Y_{ij}$ is the size-corrected value. This procedure was implemented with the function AitTrans() from the **Pstat** package in R.
 
-$$\text{Ratio}=V_g:V_p:V_e\quad\text{(normalized with respect to}\ V_g)$$
+The variance component estimation between- and within-population variance components $(\sigma^2_B$​ and $\sigma^2_W)$ were estimated using a one-factor linear mixed model, with population as a random effect:
 
-Where: V.g represent genetic variance, V.p the total phenotypic variance and V.e as environmental or error variance. 
+$$y_{ij} = \mu + P_i + \varepsilon_{ij}$$
+
+Where $y_{ij}$​ is the observation of the $j^{th}$ individual in population $i$, $\mu$ is the overall mean, $P_i$ is the random population effect, and $\varepsilon_{ij}$​ is the residual error. Variance components were extracted from model decomposition using restricted maximum likelihood (REML) and later used for the calculation of $P_{ST}$​.
+
+Phenotypic differentiation among populations was quantified using the expression derived from Spitze (1993) and Brommer (2011):
+
+$$P_{ST} = \frac{c , \sigma^2_B}{c , \sigma^2_B + 2h^2 \sigma^2_W}$$
+
+where $c$ is the proportion of the total between-population variance attributed to additive genetic effects and $h^2$ is the narrow-sense heritability. Because these genetic parameters are generally unknown for *N. pallida*, the equation was reformulated in terms of the ratio $c/h^2$:
+
+$$P_{ST} = \frac{(c/h^2),\sigma^2_B}{(c/h^2),\sigma^2_B + 2\sigma^2_W}$$
+
+The ratio $c/h^2$ describes the sensitivity of $P_{ST}$​ to uncertainty in genetic parameters and was explored over a conservative range from 0 to 3, consistent with heritability estimates reported for arid-zone tree species ($h^2 \approx 0.2{-}0.5$) and range proposed by Brommer (2011).
+
+For each trait, $P_{ST}$​ values were computed using 1,000 bootstrap resamples to obtain 95% confidence intervals. The functions Pstat() and TracePst() from the **Pstat** package were used to estimate and visualize $P_{ST}$​ across the range of $c/h^2$. 
+
+Interpretation followed the classical comparative framework of Merilä and Crnokrak (2001). When $P_{ST} > F_{ST}$​, phenotypic divergence was inferred to result from divergent or local selection; when $P_{ST} \approx F_{ST}$​, differentiation was considered compatible with neutral drift; and when $P_{ST} < F_{ST}$​, stabilizing selection was inferred. The robustness of these inferences was evaluated by determining the critical $(c/h^2)_{\text{crit}}$ value at which the confidence intervals of $P_{ST}$ and $F_{ST}$​ overlapped, as proposed by Brommer (2011). Traits showing $P_{ST}$​ values significantly higher than $F_{ST}$ under conservative assumptions ($c≤h^2$) were interpreted as candidates for adaptive divergence.
+
 
 ## Data processing and statistical analysis
 
@@ -220,7 +237,10 @@ For multivariate analyses, data were standardized (mean = 0; variance = 1) to ho
 
 Phenotypic diversity of qualitative variables was quantified using the Shannon–Weaver diversity index (H′), implemented with the *vegan* package [[39]](https://www.zotero.org/google-docs/?ky0HhR). Quantitative variables were analyzed using one-way analysis of variance (ANOVA), and group mean comparisons were conducted with Tukey’s HSD test at a significance level of α = 0.05, implemented through the *emmeans* package  **[[40]](https://www.zotero.org/google-docs/?ZOglDq). To identify patterns in the multivariate data and visualize similarity structures among localities, hierarchical heatmaps were generated using the *heatmaply* package  **[[41]](https://www.zotero.org/google-docs/?qcXj79). Prior to visualization, data were column-normalized, and hierarchical dendrograms were constructed using Euclidean distance matrices.
 
-Genetic parameters and broad-sense heritability (H²) were calculated using the *H2cal()* function implemented in the *inti* package [[42]](https://www.zotero.org/google-docs/?SzeVgW), which integrates fixed and random effects through the *lme4* package [[43]](https://www.zotero.org/google-docs/?Wp6as7). Outlier removal was performed (*outliers.rm* = TRUE), and diagnostic plots were generated (*plot\_diag* = TRUE).
+To assess population differentiation in phenotypic traits, the **Pstat** package was used for the calculation and visualization of $P_{ST}$.
+
+
+
 
 \newpage
 # RESULTS
@@ -322,46 +342,48 @@ knitr::include_graphics("article/img_3.jpg")
 
 
 
-## Heritability and tree selection
+## Assess population differentiation in Phenotypic traits
 
-Understanding the genetic improvement potential of *Neltuma pallida* in the regions of Piura and Tumbes requires quantifying the proportion of phenotypic variation attributable to genetic versus environmental effects. In this study, phenotypic characterization of 631 individuals belonging to two populations, one in Tumbes (n = 274) and one in Piura (n = 357), enabled the estimation of genetic variance (Vg), error variance (Ve), total phenotypic variance (Vp), and broad-sense heritability (H²) for seven morphological and functional traits across five localities in Tumbes and eight in Piura. The values of H² varied considerably among traits and populations, allowing the identification of those with greater genetic control and, therefore, higher potential for selection and breeding programs.
+Understanding the genetic improvement potential of *Neltuma pallida* in the regions of Piura and Tumbes requires quantifying the proportion of phenotypic variation attributable to genetic versus environmental effects. In this study, we conducted a phenotypic characterization of 631 adult individuals distributed across 12 natural populations located in both regions. The sampled populations included CC Ignacio Távara (13 individuals), Chanchape (44), Fundo Valdez (38), INIA (81), ISA REP (26), KM 190 (36), Kurt Beer (55), Marginal Forest (44), Monte Azul (56), Pedregal (52), Rica Playa (71), Saman Chico (41), and SENASA (74). To determine whether the observed phenotypic differentiation among populations reflects neutral divergence or adaptive processes, we quantified the degree of phenotypic differentiation ($P_{ST}$​) across nine functional traits and compared these values with the neutral genetic differentiation ($F_{ST}$​). This approach allowed us to infer the relative contributions of selection and drift to population divergence and to assess the adaptive potential of *N. pallida* in heterogeneous arid environments.
 
-In the Tumbes population, the trait with the highest heritability was fruit production (fruit\_production) with H² = 0.92, indicating a stable, genetically controlled phenotypic characteristic. This was followed by tree form (tree\_form, H² = 0.71) and diameter at breast height (dbh, H² = 0.78), both showing favorable variance component ratios for genetic expression (Vg:Vp:Ve = 1:1.4:3.2 and 1:1.3:2.3, respectively). Total tree height (total\_height) also displayed moderate heritability (H² = 0.78), with genetic variance exceeding error variance. In contrast, branch height (branch\_height) exhibited the lowest H² (0.28) in this population.
+```{r}
+#| label: fig-id.xpg8j1my0n1x
+#| fig-cap: "Sensitivity of phenotypic differentiation ($P_{ST}$) to the ratio$c/h^{2}$ for nine quantitative traits in *Neltuma pallida*. Solid red lines represent the estimated $P_{ST}$​ values and dashed red lines indicate the 95% bootstrap confidence intervals obtained from 1,000 resamples. The green dashed line denotes the neutral genetic differentiation ($F_{ST} = 0.03$) reported for the species (Castillo et al., 2021). Traits include growth (dbh, crown diameter, branch height, total height), stem and architectural quality (tree form, trunk quality), and reproductive or foliar traits (fruit production, fruit quality, foliage quality)."
 
-In the Piura population, a similar pattern was observed, though with generally higher heritability values. Fruit production again exhibited high heritability (H² = 0.95). Likewise, total height (H² = 0.78), stem diameter (dbh, H² = 0.67), and tree form (H² = 0.68) showed consistently strong genetic expression in key structural traits. Additionally, crown diameter (H² = 0.75), trunk quality (trunk\_quality, H² = 0.72), and branch height (H² = 0.73) also presented high values, suggesting favorable prospects for their use in selection programs.
-
-
-
-
-
-: Morphological and phenotypic characterization of *Neltuma pallida* populations across 13 localities in the departments of Piura and Tumbes, Peru. Variance components and broad-sense heritability (H²) were estimated following the approach of [Cullis et al., (2006)](https://www.zotero.org/google-docs/?49TOo9). Variance components include: genetic variance (Vg), phenotypic variance (Vp), and error variance (Ve). The “Ratio” represents the variance ratio relative to Vg for each component (Vg/Vg : Vp/Vg : Ve/Vg), serving as an indicator of the relative contribution of genetic versus environmental effects. The analysis was based on 631 individuals. {#tbl-id.5pgyfuz4ou7f}
+knitr::include_graphics("article/img_4.jpg")
+```
 
 
 
 
-| **Population**   | **Trait**        | **Localities**   | **mean**         | **std**          | **min**          | **max**          | **V.g**          | **V.e**          | **V.p**          | **Heritability** | **Ratio**         |
-|------------------|------------------|------------------|------------------|------------------|------------------|------------------|------------------|------------------|------------------|------------------|-------------------|
-| Tumbes           | DBH              | 5                | 20.82            | 5.83             | 15.6             | 28.34            | 28.64            | 65.91            | 36.88            | 0.78             | 1:1.3:2.3         |
-|                  | Crown diameter   | 5                | 7.84             | 1.28             | 6.05             | 9.59             | 1.27             | 9.38             | 2.45             | 0.52             | 1:1.9:7.4         |
-|                  | Branch height    | 5                | 2.13             | 0.56             | 1.32             | 2.7              | 0.28             | 0.87             | 0.38             | 0.72             | 1:1.4:3.2         |
-|                  | Total height     | 5                | 7.59             | 1.66             | 4.68             | 8.79             | 2.53             | 4.93             | 3.14             | 0.8              | 1:1.2:1.9         |
-|                  | Tree form        | 5                | 2.16             | 0.3              | 1.77             | 2.55             | 0.08             | 0.26             | 0.11             | 0.71             | 1:1.4:3.2         |
-|                  | Trunk quality    | 5                | 1.9              | 0.34             | 1.38             | 2.33             | 0.1              | 0.44             | 0.16             | 0.65             | 1:1.5:4.4         |
-|                  | Fruit production | 5                | 1.18             | 0.26             | 1                | 1.57             | 0.06             | 0.05             | 0.07             | 0.92             | 1:1.1:0.7         |
-| Piura            | DBH              | 8                | 38.48            | 8.75             | 23.6             | 50.07            | 67.44            | 269.9            | 101.18           | 0.67             | 1:1.5:4           |
-|                  | Crown diameter   | 8                | 12.05            | 2.49             | 6.69             | 14.43            | 6                | 16.29            | 8.03             | 0.75             | 1:1.3:2.7         |
-|                  | Branch height    | 8                | 2.72             | 0.77             | 1.59             | 3.89             | 0.53             | 2.07             | 0.79             | 0.67             | 1:1.5:3.9         |
-|                  | Total height     | 8                | 11.01            | 1.64             | 9.77             | 14.44            | 2.62             | 5.81             | 3.34             | 0.78             | 1:1.3:2.2         |
-|                  | Tree form        | 8                | 1.92             | 0.45             | 1.32             | 2.5              | 0.18             | 0.68             | 0.27             | 0.68             | 1:1.5:3.7         |
-|                  | Trunk quality    | 8                | 2.11             | 0.43             | 1.58             | 2.64             | 0.17             | 0.53             | 0.24             | 0.72             | 1:1.4:3           |
-|                  | Fruit production | 8                | 2.56             | 1.31             | 1                | 4.58             | 1.7              | 0.06             | 1.71             | 1                | 1:1:0             |
 
 
 
+
+| Trait             | Pst\_Values       | 95%\_LowBoundCI   | 95%\_UpBoundCI     |
+|-------------------|-------------------|-------------------|--------------------|
+| dbh               | 0.92              | 0.90              | 0.94               |
+| crown\_diameter   | 0.83              | 0.79              | 0.88               |
+| branch\_height    | 0.93              | 0.91              | 0.95               |
+| total\_height     | 0.94              | 0.93              | 0.95               |
+| tree\_form        | 0.96              | 0.95              | 0.97               |
+| trunk\_quality    | 0.90              | 0.87              | 0.93               |
+| fruit\_production | 0.98              | 0.97              | 0.98               |
+| fruit\_quality    | 0.96              | 0.95              | 0.97               |
+| foliage\_quality  | 0.93              | 0.91              | 0.95               |
+
+
+
+
+: Phenotypic differentiation index ($P_{ST}$​) and 95% bootstrap confidence intervals for nine quantitative traits in Neltuma pallida. Values were estimated under the null assumption $c = h^{2}$ using 1,000 bootstrap resamples. High $P_{ST}$​ values relative to the neutral genetic differentiation ($F_{ST} = 0.03$) indicate strong phenotypic divergence and suggest the action of divergent selection across populations. {#tbl-id.sg71cm5dz54i}
+
+The sensitivity analysis of phenotypic differentiation ($P_{ST}$​) with respect to the ratio $c/h^{2}$ revealed consistently high levels of divergence among populations of *Neltuma pallida* for all quantitative traits evaluated (Figure 1). Across the nine traits, the $P_{ST}$​ values increased sharply at low $c/h^{2}$ values (< 1.0) and reached asymptotic plateaus above 0.8–0.9, indicating that phenotypic differentiation remained robust even under conservative assumptions of additive genetic variance and heritability. For all traits, the estimated $P_{ST}$ curves (solid red lines) lay well above the neutral genetic differentiation threshold ($F_{ST} = 0.03$; green dashed line) throughout the explored range of $c/h^{2}$ (Figure 5). This pattern demonstrates that phenotypic divergence between populations substantially exceeds the level expected under genetic drift alone.
+
+Growth-related traits such as **dbh**, **crown diameter**, **branch height**, and **total height** showed $P_{ST}$​ values between 0.83 and 0.94 (Table 1), with narrow 95 % confidence intervals, indicating moderate-to-high differentiation and likely adaptation to local environmental conditions such as soil moisture and temperature. Architectural and stem-quality traits (**tree form** and **trunk quality**) exhibited even higher differentiation ($P_{ST} > 0.95$). Reproductive and foliar traits (**fruit production**, **fruit quality**, and **foliage quality**) also showed elevated $P_{ST}$​ values (0.92–0.98), suggesting the influence of divergent selective forces linked to reproductive output, seed dispersal, or physiological adaptation to water deficit. Among all variables, **fruit production** displayed the highest phenotypic differentiation ($P_{ST} = 0.98$), indicating a potentially strong local adaptation of reproductive effort across environments.
 
 A multivariate analysis was conducted, excluding variables with low contributions to explained variance. After preliminary evaluation, branching and branch height were removed due to their minimal influence on the multivariate structure of the dataset.
 
-Principal component analysis (PCA) was then applied to explore phenotypic variability among individuals. The first two principal components explained 71.00% of the total system variance, with Dim 1 accounting for 54.30% and Dim 2 for 16.70%. In Dim 1, the variables contributing most to variance were crown diameter (15.75%), fruit production (15.02%), fruit quality (14.89%), and total height (14.29%). Dim 2 was mainly influenced by tree form (40.75%) and trunk quality (24.58%) ([Figure 5](?tab=t.ecc2pbe3h01k#bookmark=id.59gj1fd1tlfe)).
+Principal component analysis (PCA) was then applied to explore phenotypic variability among individuals. The first two principal components explained 71.00% of the total system variance, with Dim 1 accounting for 54.30% and Dim 2 for 16.70%. In Dim 1, the variables contributing most to variance were crown diameter (15.75%), fruit production (15.02%), fruit quality (14.89%), and total height (14.29%). Dim 2 was mainly influenced by tree form (40.75%) and trunk quality (24.58%) ([@fig-id.59gj1fd1tlfe]).
 
 The variable biplot showed clear groupings according to their contribution and orientation within the factorial space ([Figure 5a](?tab=t.ecc2pbe3h01k#bookmark=id.59gj1fd1tlfe)). Three main associations were identified: (i) tree form and trunk quality aligned with Dim 2; (ii) DBH, total height, and crown diameter strongly correlated with Dim 1; and (iii) fruit production, fruit quality, and foliage quality, also associated with Dim 1 but positioned toward the positive quadrant of the axis ([Figure 5a](?tab=t.ecc2pbe3h01k#bookmark=id.59gj1fd1tlfe)).
 
@@ -371,7 +393,7 @@ At the individual level, trees from Monte Azul, Samán Chico, and Fundo Valdez c
 #| label: fig-id.59gj1fd1tlfe
 #| fig-cap: "Principal component analysis (PCA) of morphological and phenotypic traits in *Neltuma pallida* populations from Piura and Tumbes. (a) Projection of morphological and phenotypic variables onto the first two principal components, which explain the largest proportion of system variance. (b) Distribution of individuals grouped by locality in the multivariate space defined by the principal components, based on morphological and phenotypic characteristics. The analysis was conducted on 631 individuals (n = 631)."
 
-knitr::include_graphics("article/img_4.jpg")
+knitr::include_graphics("article/img_5.jpg")
 ```
 
 Outstanding trees were identified belonging to the locality of Monte Azul, La Matanza, Morropón – Piura. These individuals were distinguished by their high vigor, well-formed boles, strong fruiting capacity, and dense foliage cover. They met all favorable qualitative and quantitative selection criteria and displayed outstanding morpho-phenotypic expression compared with the rest of the population. Their superior attributes included abundant fruit production, vigorous biomass development, and close correspondence with favorable habitat conditions and conservation status.
@@ -399,11 +421,21 @@ The morpho-phenotypic characterization revealed high polymorphism within and amo
 
 Our results are also consistent with Esparza-Orozco [[61]](https://www.zotero.org/google-docs/?OPMntU), who identified significant phenotypic differences among *Neltuma* populations associated with geographic origin. These findings suggest that phenology and morphology in this genus are strongly influenced by ecological factors. Vidaković [[62]](https://www.zotero.org/google-docs/?S3cFSS) further emphasized that interactions between environment and geography can explain observed phenotypic variation, reflecting potential processes of isolation by environment and by distance. In our study, Monte Azul, Chanchape, and Samán Chico (Piura) were distinguished by superior morphological and phenotypic performance, while Rica Playa, ISA REP, and SENASA (Tumbes) were associated with lower performance. This pattern supports the hypothesis of simultaneous environmental and geographic isolation shaping genetic and phenotypic structuring in *N. pallida* populations. According to Wang [[63]](https://www.zotero.org/google-docs/?sCRxP2), high phenotypic variation often reflects high genetic diversity; thus, phenotypic evaluation represents a direct and effective approach for estimating diversity in forest germplasm resources.
 
-## Genetic influence and identification of superior trees
+## Population differentiation and identification of superior trees
 
-The genetic influence observed in *N. pallida* aligns with patterns reported in other forest species from contrasting environments, where high heritability coefficients predict genetic gains in selection programs. In this study, fruit production exhibited high heritability (H² ≈ 0.92–1.00), confirming strong genetic control and limited environmental influence, ensuring high response to selection. Moderate-to-high heritability values for structural traits such as DBH, total height, and crown diameter also suggest that vegetative growth traits are suitable targets for breeding programs. These findings are consistent with recent studies in *Pinus pinaster* and *Juglans mandshurica,* where size-related traits displayed higher heritability than form-related traits, highlighting their value in early breeding cycles [[64,65]](https://www.zotero.org/google-docs/?oZn3Hz). Prioritizing traits with high heritability and temporal stability, such as bole straightness or branch insertion angle, optimizes selection accuracy while minimizing environmental and genotype × environment (G×E) effects, which is crucial in heterogeneous ecosystems such as dry forests.
+The consistent pattern of high phenotypic differentiation ($P_{ST}$​) across all evaluated traits in *Neltuma pallida* indicates that the morphological divergence among populations cannot be explained solely by neutral processes such as genetic drift. The magnitude of  $P_{ST}$​ greatly exceeding $F_{ST}$​ (0.03; Castillo et al., 2021) supports the hypothesis that adaptive differentiation has occurred under heterogeneous selection pressures associated with environmental gradients of aridity, soil texture, and local management regimes. Similar evidence has been reported for other species within the *Prosopis* complex, such as *P. chilensis* and *P. flexuosa*, where phenotypic variation reflects a combination of environmental and evolutionary processes (Chequer Charan et al., 2020; Darquier et al., 2013). However, while *P. chilensis* shows low quantitative differentiation and signals of stabilizing selection due to ecological homogeneity, *N. pallida* exhibits stronger and more consistent divergence, suggesting that selection operates under more pronounced environmental contrasts or stronger directional pressures. The elevated $P_{ST}$ values for traits related to growth, tree architecture, and reproduction—particularly fruit production ($P_{ST}=0.98$) and tree form ($P_{ST}=0.96$)—indicate that these traits are likely under divergent selection, reflecting adaptation to site-specific ecological conditions and resource availability.
 
-In the present study, individuals with superior phenotypes belonging to the Monte Azul locality were identified, exhibiting outstanding characteristics in growth and pod production, thus representing the most promising material for inclusion in a germplasm bank. Nevertheless, considering the results obtained from populations such as Rica Playa and ISA REP, where lower mean values were recorded for morphological and phenotypic variables, it is important to emphasize that even in these less favorable environments, individuals with exceptional performance can be identified [[66]](https://www.zotero.org/google-docs/?uXBrbi). These specimens could be considered complementary candidates for selection, as their adaptation to more restrictive environmental conditions suggests the presence of genetic traits associated with tolerance and resilience to environmental stress [[67]](https://www.zotero.org/google-docs/?HaRrRG). The incorporation of individuals from marginal populations could strengthen the genetic base of breeding programs, contributing useful variability for ecological restoration in dry forest ecosystems.
+These findings align with the adaptive framework proposed by Castillo et al. (2021), who demonstrated that natural selection related to aridity, salinity, and biotic interactions has repeatedly driven adaptive radiation in the *Prosopis* lineage. The patterns observed in *N. pallida* reinforce the hypothesis that phenotypic evolution in this taxon is shaped by strong selection gradients acting on both structural and reproductive traits. High phenotypic differentiation coupled with low neutral genetic structure suggests that selection acts effectively despite potential gene flow among populations. Overall, the results point to a scenario of **local adaptation and divergent selection** in *N. pallida*, contrasting with the nearly neutral differentiation reported in *P. chilensis*. From a conservation and management perspective, maintaining population-level genetic diversity and local seed sources will be critical to preserving the adaptive potential of *N. pallida* in the face of increasing climatic and anthropogenic pressures.
+
+
+
+
+
+
+
+
+
+Additionally, individuals with superior phenotypes belonging to the Monte Azul locality were identified, exhibiting outstanding characteristics in growth and pod production, thus representing the most promising material for inclusion in a germplasm bank. Nevertheless, considering the results obtained from populations such as Rica Playa and ISA REP, where lower mean values were recorded for morphological and phenotypic variables, it is important to emphasize that even in these less favorable environments, individuals with exceptional performance can be identified [[66]](https://www.zotero.org/google-docs/?uXBrbi). These specimens could be considered complementary candidates for selection, as their adaptation to more restrictive environmental conditions suggests the presence of genetic traits associated with tolerance and resilience to environmental stress [[67]](https://www.zotero.org/google-docs/?HaRrRG). The incorporation of individuals from marginal populations could strengthen the genetic base of breeding programs, contributing useful variability for ecological restoration in dry forest ecosystems.
 
 Identification of superior trees was based on individual assessment, allowing the selection of outstanding trees in terms of fruit production, vegetative vigor, and crown architecture across 13 localities in Piura and Tumbes. Approximately 90% of individuals with superior traits were concentrated in these regions, consistent with Castro [[14]](https://www.zotero.org/google-docs/?550Osd). While phenotypic selection was used here, comparisons with neighboring trees can further reduce microsite and age-related biases, increasing accuracy of genetic estimates [[68]](https://www.zotero.org/google-docs/?DSQ58Z). Multivariate analyses confirmed that individuals from Monte Azul, Chanchape, and Samán Chico clustered in dimensions associated with higher productivity and biomass. Consolidating these candidates requires validation through progeny tests and clonal banks, as well as the integration of modern tools such as high-throughput phenotyping and genomic selection, which have proven effective in accelerating breeding cycles and mitigating G×E effects in forest programs [[14,69]](https://www.zotero.org/google-docs/?6myR3d). The selected individuals provide a robust foundation for establishing seed orchards and germplasm banks, contributing to the productive and sustainable restoration of Peruvian dry forests.
 

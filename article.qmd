@@ -73,9 +73,9 @@ doc$path %>%
 library(tidyverse)
 library(magick)
 
-pdf4pub <- list.files("files/", pattern = "Fig.*pdf", full.names = T) 
+pdf4pub <- list.files("submission", pattern = "Figure_5.*pdf", full.names = T) 
 
-path <- "DisEd/"
+path <- "submission/"
 
 imgs <- 1:length(pdf4pub) %>% map(\(x) {
   
