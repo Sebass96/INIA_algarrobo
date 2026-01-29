@@ -1,0 +1,15 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Database of the Neltuma tree article
+message: 'If you use this database, please cite the article'
+type: dataset
+authors:
+  - given-names: Sebastian
+    family-names: Casas-Niño
+    email: 20140231@lamolina.edu.pe
+    orcid: 'https://orcid.org/0000-0002-6576-8761'
+identifiers:
+  - type: url
+    value: 'https://www.mdpi.com/1424-2818/17/11/802'
