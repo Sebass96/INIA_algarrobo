@@ -1,4 +1,4 @@
-**Morpho-phenotypic evaluation of algarrobo (_Neltuma pallida_) for the identification of superior individuals in dry forest ecosystems**
+**Diversity and selection of superior algarrobos (_Neltuma pallida_) phenotypes in the natural dry forests of Peru for sustainable conservation and genetic improvement**
 
 Sebastian Casas-Niño; Juan Rodrigo Baselly-Villanueva; Evelin Judith Salazar-Hinostroza; Sheyla Yanett Chumbimune-Vivanco; William Naurai; Nery Tirabante Terrones; Max Ramirez Rojas; Flavio Lozano-Isla.
 
@@ -11,6 +11,10 @@ Sebastian Casas-Niño; Juan Rodrigo Baselly-Villanueva; Evelin Judith Salazar-Hi
 ## Database
 
 > https://docs.google.com/spreadsheets/d/19zJF9ti9AQhOCTenP6UqL0jA8Anl1s0r0ld-xzrR-PY/edit?gid=1347114226#gid=1347114226
+
+## Article
+
+> DOI: https://doi.org/10.3390/d17110802
 
 ---
 
